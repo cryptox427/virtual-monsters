@@ -1,4 +1,9 @@
 import {useState, useRef, useEffect} from 'react'
+import { useWeb3React } from '@web3-react/core'
+import Modal from 'react-modal'
+import { injected, walletconnector, bsc } from './utils/connector'
+import { wallets } from './components/constants'
+
 import './App.css';
 import './style.css'
 import $ from 'jquery';
@@ -9,10 +14,16 @@ import pdf from './assets/whitepaper.pdf'
 import 'swiper/swiper.min.css'
 import 'swiper/modules/pagination/pagination.min.css'
 
+const Cancel = 'images/cancel.svg'
+
 
 function App() {
   const [selected, setSelected] = useState(null);
   const [isOpen, setOpen] = useState(false);
+
+  const { account, chainId, activate, deactivate } = useWeb3React();
+
+
   const swiperRef = useRef(null)
   const navItems = [
     {name: 'About', id: 'about'},
@@ -97,6 +108,24 @@ function App() {
     });
   }
 
+
+  const customStyles = {
+    content: {
+      top: '50%',
+      left: '50%',
+      right: 'auto',
+      bottom: 'auto',
+      marginRight: '-50%',
+      transform: 'translate(-50%, -50%)',
+      width: '20%',
+      height: '500px',
+      borderRadius: '15px',
+      background: 'rgba(0, 0, 0, 0.95)',
+      paddingTop: '10px',
+      minWidth:'250px', 
+    },
+  }
+
   const data = [
     ["Task", "Hours per Day"],
     ["MINER REWARDS", 10],
@@ -130,6 +159,33 @@ function App() {
   const onOpenWhitepaper = () => {
     window.open(pdf, '_blank')
   }
+
+  const walletModalOpen = async () => {
+    setOpen(true);
+  }
+
+  const walletDisconnect = async () => {
+    deactivate();
+    // alert("Close");
+  }
+
+  const closeModal = () => {
+    setOpen(false)
+  }
+  
+  const handleLogin = async (wname) => {
+
+    if (wname === 'Wallet Connect') { 
+      activate(walletconnector);
+    } else if (wname === 'Binance Wallet') {
+      activate(bsc)
+    } else {
+      await activate(injected);
+    }
+    setOpen(false)
+  }
+
+
   return (
     <div className={'background overflow-y-scroll'}>
       <nav className={'py-5 hidden xl:flex justify-between items-center  px-3 z-10'}>
@@ -144,11 +200,24 @@ function App() {
           <div className={'flex items-center space-x-7'}>
             <a><img src={require('./assets/images/icon-discord.svg').default} alt={''}/> </a>
             <a><img src={require('./assets/images/icon-twitter.svg').default} alt={''}/> </a>
-            <button className={'flex justify-center items-center rounded-full px-6 py-2 text-sm text-white relative h-10'}>
+            {/* <button className={'flex justify-center items-center rounded-full px-6 py-2 text-sm text-white relative h-10'}>
               <img src={require('./assets/images/btn.png').default} className={'absolute h-14 w-48'} style={{zIndex: -1}}/>
               CONNECT
-              WALLET
-            </button>
+              WALLET !!!!
+            </button> */}
+
+            {!account ? (
+              <button  onClick={walletModalOpen} className={'flex justify-center items-center rounded-full px-6 py-2 text-sm text-white relative h-10'}>
+                <img src={require('./assets/images/btn.png').default} className={'absolute h-14 w-48'} style={{zIndex: -1}}/>
+                  CONNECT WALLET
+              </button>
+            ) : (
+              <button  onClick={walletDisconnect} className={'flex justify-center items-center rounded-full px-6 py-2 text-sm text-white relative h-10'}>
+                <img src={require('./assets/images/btn.png').default} className={'absolute h-14 w-48'} style={{zIndex: -1}}/>
+                  {account.slice(0, 9) + '...' + account.slice(account.length-7, account.length)}
+              </button>
+            )}
+
           </div>
         </div>
       </nav>
@@ -168,11 +237,14 @@ function App() {
         {isOpen && <div className={'flex items-center space-x-10 mt-4 mb-4'}>
           <a><img src={require('./assets/images/icon-discord.svg').default} alt={''}/> </a>
           <a><img src={require('./assets/images/icon-twitter.svg').default} alt={''}/> </a>
+
+
           <button className={'flex justify-center items-center rounded-full px-6 py-2 text-sm text-white relative h-10'}>
             <img src={require('./assets/images/btn.png').default} className={'absolute h-14 w-48'} style={{zIndex: -1}}/>
             CONNECT
             WALLET
           </button>
+
         </div>}
       </nav>
       <div>
@@ -242,17 +314,6 @@ function App() {
       </div>
       <div className={'pt-10 pb-16'} id={'nfts'}>
         <div className={'flex justify-center items-center text-5xl font-semibold text-white my-10'}>NFTS</div>
-        {/*<section className="cards">*/}
-        {/*  <div className="card charizard animated relative flex justify-center">*/}
-        {/*    <div className={'absolute bottom-4'}>*/}
-        {/*      test*/}
-        {/*    </div>*/}
-        {/*  </div>*/}
-        {/*  <div className="card pika animated"/>*/}
-        {/*  <div className="card eevee animated"/>*/}
-        {/*  <div className="card mewtwo animated"/>*/}
-        {/*</section>*/}
-
 
         <div className="tech-slideshow">
           <div className="mover-1 flex justify-between items-center">
@@ -277,33 +338,6 @@ function App() {
           </div>
 
         </div>
-        {/*<Swiper*/}
-        {/*  slidesPerView={5}*/}
-        {/*  spaceBetween={0}*/}
-        {/*  slidesPerGroup={5}*/}
-        {/*  autoplay={{*/}
-        {/*    disableOnInteraction: false,*/}
-        {/*    delay: 0,*/}
-        {/*    waitForTransition: false,*/}
-        {/*  }}*/}
-        {/*  freeMode*/}
-        {/*  speed={7000}*/}
-        {/*  effect={'slide'}*/}
-        {/*  longSwipes*/}
-        {/*  loop={true}*/}
-        {/*  // loopFillGroupWithBlank={false}*/}
-        {/*  modules={[Autoplay]}*/}
-        {/*  className="mySwiper"*/}
-        {/*>*/}
-        {/*  <SwiperSlide><img src={require('./assets/images/pets/Ceasers Pet NFT.png').default} className={'h-80 w-80 bg-white object-contain'}/></SwiperSlide>*/}
-        {/*  <SwiperSlide><img src={require('./assets/images/pets/Matt Lambo Pet NFT.png').default} className={'h-80 w-80 bg-white object-contain'}/></SwiperSlide>*/}
-        {/*  <SwiperSlide><img src={require('./assets/images/pets/Maythous Pet NFT.JPG').default} className={'h-80 w-80 bg-white object-contain'}/></SwiperSlide>*/}
-        {/*  <SwiperSlide><img src={require('./assets/images/pets/Saul Pinksale Pet NFT.JPG').default} className={'h-80 w-80 bg-white object-contain'}/></SwiperSlide>*/}
-        {/*  <SwiperSlide><img src={require('./assets/images/pets/Sully Pet NFT.JPG').default} className={'h-80 w-80 bg-white object-contain'}/></SwiperSlide>*/}
-        {/*  <SwiperSlide><img src={require('./assets/images/pets/Travladd Pet NFT.PNG').default} className={'h-80 w-80 bg-white object-contain'}/></SwiperSlide>*/}
-        {/*  <SwiperSlide><img src={require('./assets/images/pets/Venom Pet NFT.JPG').default} className={'h-80 w-80 bg-white object-contain'}/></SwiperSlide>*/}
-        {/*  <SwiperSlide><img src={require('./assets/images/pets/Zlounge .jpg').default} className={'h-80 w-80 bg-white object-contain'}/></SwiperSlide>*/}
-        {/*</Swiper>*/}
       </div>
       <div className={'pt-10 pb-16'} id={'tokenomics'}>
         <div className={'flex justify-center items-center text-5xl font-semibold text-white mt-10'}>Tokenomics</div>
@@ -382,6 +416,44 @@ function App() {
           </a>
         </div>
       </div>
+
+      <Modal
+        isOpen={isOpen}
+        // onAfterOpen={afterOpenModal}
+        closeModal={closeModal}
+        style={customStyles}
+        contentLabel="Example Modal"
+        onRequestClose={closeModal}
+      >
+        <div style={{ borderBottom: '1px solid silver', padding: '3px' }}>
+          <img
+            src={Cancel}
+            style={{
+              background: 'transparent',
+              width: '25px',
+              color: 'white',
+              border: '0',
+              float: 'right',
+            }}
+            onClick={closeModal}
+          />
+          <br />
+          <br />
+          Connect Wallet
+        </div>
+        <br />
+        {wallets.map((wallet) => (
+          <div
+            key={wallet.name}
+            className="wallet-modal__list__item"
+            onClick={() => handleLogin(wallet.name)}
+          >
+            <font className="font-size-14">{wallet.name}</font>
+            <img src={wallet.icon} alt={wallet.name} />
+          </div>
+        ))}
+      </Modal>
+
     </div>
   );
 }

@@ -11,9 +11,14 @@ import './assets/fonts/Futura Light font.ttf'
 import './assets/fonts/Futura Medium Italic font.ttf'
 import './assets/fonts/Futura XBlk BT.ttf'
 
+import { Web3ReactProvider } from '@web3-react/core'
+import getLibrary from './utils/getLibrary' 
+
 ReactDOM.render(
   <React.StrictMode>
-    <App /> 
+    <Web3ReactProvider getLibrary={getLibrary}>
+      <App /> 
+    </Web3ReactProvider>
   </React.StrictMode>,
   document.getElementById('root')
 );
