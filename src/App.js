@@ -210,6 +210,11 @@ function App() {
 
   const mintNow = async () => {
     const { ethereum } = window;
+      if(mintState)
+      {
+        alert("Transaction is performing now. Please wait and try again");
+        return;
+      }
         if (ethereum) {
             var provider = new ethers.providers.Web3Provider(ethereum);
             const accounts = await provider.listAccounts();
@@ -225,14 +230,15 @@ function App() {
                 const presalePrice = await VMonsterContract.presalePrice();
                 // alert(presalePrice);
                 let price = mintAmount * presalePrice;
-                alert(price);
+                console.log(mintAmount);
+
                 if(mintStep == 1)
                 {
-                  // const result1_approve = 
-                  const nftTxn = await VMonsterContract.mintPresale(mintAmount, {value: ethers.BigNumber.from(price)});
-                  console.log("Mining...please wait.")
+                  // const nftTxn = await VMonsterContract.mintPresale(mintAmount, { value: ethers.utils.parseEther('0.08') });
+                  const nftTxn = await VMonsterContract.mintPresale(mintAmount, { value: `${price}`});
+                  console.log("Minting...please wait.")
                   await nftTxn.wait();
-                  console.log(`Mined, see transaction: https://goerli.etherscan.io/tx/${nftTxn.hash}`);
+                  console.log(`Minted, see transaction: https://goerli.etherscan.io/tx/${nftTxn.hash}`);
 
                   // const result = await VMonsterContract.getSetting();    //it works properly but mintPresale function doe not work
                   // console.log(result);
@@ -409,33 +415,37 @@ function App() {
             <img src={require('./assets/images/pets/Z Lounge Slider.png').default} className={'h-80 w-80 object-contain'} />
           </div>
         </div>
-        <div className="mint-area flex justify-center flex-col items-center ">
-          <div className={'flex w-full justify-center items-center text-5xl font-semibold text-white my-10'}>MINT</div>
+        {account ? (
+          <div className="mint-area flex justify-center flex-col items-center ">
+            <div className={'flex w-full justify-center items-center text-5xl font-semibold text-white my-10'}>MINT</div>
 
-          <div className='flex w-1/3 justify-center items-center flex-col'>
-            <div className='mint_amount flex flex-row'>
-              <button className="rounded-full w-8 ctrl-number" onClick={subMintNumber}>
-                -
-              </button>
-              <input
-                type="number"
-                id="first_name"
-                value = {mintAmount}
-                onClick={mintNow}
-                className="rounded flex text-black ml-5 mr-5" required />
-              <button className="rounded-full w-8 ctrl-number" onClick={addMintNumber}>
-                +
-              </button>
-            </div>
-            <div>
-              {/* <input className={'flex bg-red-900 text-white mt-10'} type='button' value={'MINT NOW'} /> */}
-              <button onClick={mintNow} className={'flex justify-center items-center rounded-full px-6 py-2 mt-10 text-sm text-white relative h-10 cta-button'}>
-                <img src={require('./assets/images/btn.png').default} className={'absolute h-14 w-48'} style={{ zIndex: -1 }} />
-                  MINT NOW
-              </button>
+            <div className='flex w-1/3 justify-center items-center flex-col'>
+              <div className='mint_amount flex flex-row'>
+                <button className="rounded-full w-8 ctrl-number" onClick={subMintNumber}>
+                  -
+                </button>
+                <input
+                  type="number"
+                  id="first_name"
+                  value = {mintAmount}
+                  onClick={mintNow}
+                  className="rounded flex text-black ml-5 mr-5" required />
+                <button className="rounded-full w-8 ctrl-number" onClick={addMintNumber}>
+                  +
+                </button>
+              </div>
+              <div>
+                {/* <input className={'flex bg-red-900 text-white mt-10'} type='button' value={'MINT NOW'} /> */}
+                <button onClick={mintNow} className={'flex justify-center items-center rounded-full px-6 py-2 mt-10 text-sm text-white relative h-10 cta-button'}>
+                  <img src={require('./assets/images/btn.png').default} className={'absolute h-14 w-48'} style={{ zIndex: -1 }} />
+                    MINT NOW
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+          ) : (
+          <></>
+          )}
         <div className={'pt-10 pb-16'} id={'tokenomics'}>
           <div className={'flex justify-center items-center text-5xl font-semibold text-white mt-10'}>Tokenomics</div>
           <div className={'mt-5 text-center text-2xl text-white font-medium'}>Total Supply: 1,000,000,000,000</div>
