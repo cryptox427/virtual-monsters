@@ -1,18 +1,20 @@
 import { useState, useRef, useEffect } from 'react'
 import { useWeb3React } from '@web3-react/core'
 import Modal from 'react-modal'
-import Web3 from 'web3'
 import { ethers } from "ethers";
+import Web3 from 'web3';
 
 import { injected, walletconnector, bsc } from './utils/connector'
 import { wallets } from './components/constants'
 
 import './App.css';
-import './style.css'
+import './style.css';
+
+import { ToastsContainer, ToastsStore } from 'react-toasts';
+
+
 import $ from 'jquery';
 import { Chart } from "react-google-charts";
-import { Pagination, Autoplay } from 'swiper'
-import { Swiper, SwiperSlide } from 'swiper/react/swiper-react'
 import pdf from './assets/whitepaper.pdf'
 import 'swiper/swiper.min.css'
 import 'swiper/modules/pagination/pagination.min.css'
@@ -25,18 +27,18 @@ const VMonsterAddress = "0xdDB43c95EEBce2ddb38872287CE33D17057aAa48";
 
 
 
+
 function App() {
-  const [selected, setSelected] = useState(null);
   const [isOpen, setOpen] = useState(false);
   const [mintAmount, setMintAmount] = useState(0);
   const [mintState, setMintState] = useState(false);
 
   const { account, chainId, activate, deactivate } = useWeb3React();
 
-  //if mintstep is 0, it is presale. else that is 1 it is public sale.
+  //if mintstep is 1, it is presale. else that is 2 it is public sale.
   const [mintStep, setMintStep] = useState(1);
 
-  
+
 
 
   const swiperRef = useRef(null)
@@ -181,7 +183,6 @@ function App() {
 
   const walletDisconnect = async () => {
     deactivate();
-    // alert("Close");
   }
 
   const closeModal = () => {
@@ -189,78 +190,80 @@ function App() {
   }
 
   const handleLogin = async (wname) => {
-
+    let sign = 1;
     if (wname === 'Wallet Connect') {
       activate(walletconnector);
     } else if (wname === 'Binance Wallet') {
       activate(bsc)
-    } else {
+    } else if (wname === 'Metamask') {
       await activate(injected);
+    } else {
+      ToastsStore.error("This supports only Metamask and Wallet Connect");
     }
     setOpen(false)
   }
 
   const subMintNumber = async () => {
-    setMintAmount(mintAmount-1);
+    if (mintAmount - 1 <= 0)
+      setMintAmount(0);
+    else
+      setMintAmount(mintAmount - 1);
   }
 
   const addMintNumber = async () => {
-    setMintAmount(mintAmount+1);
+    // if(mintAmount >= 2)
+    //   setMintAmount(2);
+    // else
+    setMintAmount(mintAmount + 1);
   }
 
   const mintNow = async () => {
     const { ethereum } = window;
-      if(mintState)
-      {
-        alert("Transaction is performing now. Please wait and try again");
-        return;
-      }
-        if (ethereum) {
-            var provider = new ethers.providers.Web3Provider(ethereum);
-            const accounts = await provider.listAccounts();
-            if (accounts.length > 0) {
-                const { chainId } = await provider.getNetwork();
-                if (chainId !== 0x5) {
-                    return;
-                }
-                setMintState(true);
+    if (mintState) {
+      ToastsStore.error("Transaction is performing now. Please wait and try again");
+      return;
+    }
+    if (ethereum) {
+      var provider = new ethers.providers.Web3Provider(ethereum);
+      const accounts = await provider.listAccounts();
+      if (accounts.length > 0) {
+        const { chainId } = await provider.getNetwork();
+        if (chainId !== 0x5) {
+          return;
+        }
+        setMintState(true);
 
-                const signer = provider.getSigner();
-                const VMonsterContract = new ethers.Contract(VMonsterAddress, VMonstersABI, signer);
-                const presalePrice = await VMonsterContract.presalePrice();
-                // alert(presalePrice);
-                let price = mintAmount * presalePrice;
-                console.log(mintAmount);
+        const signer = provider.getSigner();
+        const VMonsterContract = new ethers.Contract(VMonsterAddress, VMonstersABI, signer);
+        const presalePrice = await VMonsterContract.presalePrice();
+        const mintPrice = await VMonsterContract.mintPrice();
 
-                if(mintStep == 1)
-                {
-                  // const nftTxn = await VMonsterContract.mintPresale(mintAmount, { value: ethers.utils.parseEther('0.08') });
-                  const nftTxn = await VMonsterContract.mintPresale(mintAmount, { value: `${price}`});
-                  console.log("Minting...please wait.")
-                  await nftTxn.wait();
-                  console.log(`Minted, see transaction: https://goerli.etherscan.io/tx/${nftTxn.hash}`);
 
-                  // const result = await VMonsterContract.getSetting();    //it works properly but mintPresale function doe not work
-                  // console.log(result);
-                  
-                }
-                else
-                {
-                  // const result = await VMonsterContract.mintPublic(mintAmount);
-                }
-                // const result = await VMonsterContract.getSetting();
-                // console.log(result);
-
-                alert("NFT minting successed!");
-
-            } else {
-                alert("Please connect the wallet");
-            }
-        } else {
-            alert("Please install Metamask!");
+        if (mintStep == 1) {
+          let price = mintAmount * presalePrice;
+          const nftTxn = await VMonsterContract.mintPresale(mintAmount, { value: `${price}` });
+          ToastsStore.success("Minting...please wait.")
+          await nftTxn.wait();
+          ToastsStore.success(`Minted, see transaction: https://goerli.etherscan.io/tx/${nftTxn.hash}`);
+        }
+        else {
+          let price = mintAmount * mintPrice;
+          const nftTxn = await VMonsterContract.mintPublic(mintAmount, { value: `${price}` });
+          ToastsStore.success("Minting...please wait.")
+          await nftTxn.wait();
+          ToastsStore.success(`Minted, see transaction: https://goerli.etherscan.io/tx/${nftTxn.hash}`);
         }
 
-        setMintState(false);
+        ToastsStore.success("NFT minting successed!");
+
+      } else {
+        ToastsStore.error("Please connect the wallet");
+      }
+    } else {
+      ToastsStore.error("Please install Metamask!");
+    }
+
+    setMintState(false);
   }
 
 
@@ -278,11 +281,6 @@ function App() {
           <div className={'flex items-center space-x-7'}>
             <a><img src={require('./assets/images/icon-discord.svg').default} alt={''} /> </a>
             <a><img src={require('./assets/images/icon-twitter.svg').default} alt={''} /> </a>
-            {/* <button className={'flex justify-center items-center rounded-full px-6 py-2 text-sm text-white relative h-10'}>
-              <img src={require('./assets/images/btn.png').default} className={'absolute h-14 w-48'} style={{zIndex: -1}}/>
-              CONNECT
-              WALLET !!!!
-            </button> */}
 
             {!account ? (
               <button onClick={walletModalOpen} className={'flex justify-center items-center rounded-full px-6 py-2 text-sm text-white relative h-10'}>
@@ -427,7 +425,7 @@ function App() {
                 <input
                   type="number"
                   id="first_name"
-                  value = {mintAmount}
+                  value={mintAmount}
                   onClick={mintNow}
                   className="rounded flex text-black ml-5 mr-5" required />
                 <button className="rounded-full w-8 ctrl-number" onClick={addMintNumber}>
@@ -438,14 +436,14 @@ function App() {
                 {/* <input className={'flex bg-red-900 text-white mt-10'} type='button' value={'MINT NOW'} /> */}
                 <button onClick={mintNow} className={'flex justify-center items-center rounded-full px-6 py-2 mt-10 text-sm text-white relative h-10 cta-button'}>
                   <img src={require('./assets/images/btn.png').default} className={'absolute h-14 w-48'} style={{ zIndex: -1 }} />
-                    MINT NOW
+                  MINT NOW
                 </button>
               </div>
             </div>
           </div>
-          ) : (
+        ) : (
           <></>
-          )}
+        )}
         <div className={'pt-10 pb-16'} id={'tokenomics'}>
           <div className={'flex justify-center items-center text-5xl font-semibold text-white mt-10'}>Tokenomics</div>
           <div className={'mt-5 text-center text-2xl text-white font-medium'}>Total Supply: 1,000,000,000,000</div>
@@ -523,7 +521,6 @@ function App() {
             </a>
           </div>
         </div>
-
         <Modal
           isOpen={isOpen}
           // onAfterOpen={afterOpenModal}
@@ -560,6 +557,7 @@ function App() {
           ))}
         </Modal>
       </div>
+      <ToastsContainer store={ToastsStore} />
     </div>
   );
 }
