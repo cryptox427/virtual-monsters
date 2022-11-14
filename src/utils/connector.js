@@ -7,14 +7,14 @@ Buffer.from('anything','base64');
 
 const POLLING_INTERVAL = 12000
 
-const chainIds = [1, 4, 56, 97];
+const chainIds = [1, 4, 5,  56, 97];
 
 export const injected = new InjectedConnector({ supportedChainIds: chainIds })
 
 export const walletconnector = new WalletConnectConnector({
   rpc: { 1: "https://mainnet.infura.io/v3/66b1fd9daec44fbeb94eca2b0386b455"},
   bridge: 'https://bridge.walletconnect.org',
-  supportedChainIds:[1,4,56,97],
+  supportedChainIds:[1,4,5,56,97],
   qrcode: true,
 });
 

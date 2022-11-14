@@ -90,3 +90,30 @@ div, button, text {
   margin-bottom: 5px;
 
 }
+
+.clear {
+  clear: both;
+}
+
+.ctrl-number {
+  border: 1px solid wheat;
+  font-size: 25px;
+}
+
+/* .ctrl-number:hover {
+  box-shadow: 6px 6px 13px 1px rgb(0 0 0 / 12%);
+  transform: translate(0px,-8px);
+  color: #fff;
+} */
+
+#first_name {
+  border-radius: 20px;
+  padding: 5px 10px;
+  text-align: center;
+}
+
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
