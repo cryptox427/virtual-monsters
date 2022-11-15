@@ -22,7 +22,7 @@ import 'swiper/modules/pagination/pagination.min.css'
 import VMonstersABI from "./contracts/VirtualMonsters.json";
 
 const Cancel = 'images/cancel.svg';
-const VMonsterAddress = "0xdDB43c95EEBce2ddb38872287CE33D17057aAa48";
+const VMonsterAddress = "0xc777950A5Df2aEb89543145628E33679a0A9E53B";
 
 
 
@@ -239,30 +239,42 @@ function App() {
         const mintPrice = await VMonsterContract.mintPrice();
 
 
-        if (mintStep == 1) {
+        if (mintStep == 1) 
+        {
           let price = mintAmount * presalePrice;
-          const nftTxn = await VMonsterContract.mintPresale(mintAmount, { value: `${price}` });
-          ToastsStore.success("Minting...please wait.")
-          await nftTxn.wait();
-          ToastsStore.success(`Minted, see transaction: https://goerli.etherscan.io/tx/${nftTxn.hash}`);
+
+          try {
+            const nftTxn = await VMonsterContract.mintPresale(mintAmount, { value: `${price}` });
+            ToastsStore.success("Minting...please wait.")
+            await nftTxn.wait();
+            ToastsStore.success(`Minted, see transaction: https://goerli.etherscan.io/tx/${nftTxn.hash}`);
+          } catch (e) {
+            console.log(e)
+            ToastsStore.error("Sorry. Error occured")
+            return;
+          }
         }
         else {
           let price = mintAmount * mintPrice;
-          const nftTxn = await VMonsterContract.mintPublic(mintAmount, { value: `${price}` });
-          ToastsStore.success("Minting...please wait.")
-          await nftTxn.wait();
-          ToastsStore.success(`Minted, see transaction: https://goerli.etherscan.io/tx/${nftTxn.hash}`);
+          
+          try {
+            const nftTxn = await VMonsterContract.mintPublic(mintAmount, { value: `${price}` });
+            ToastsStore.success("Minting...please wait.")
+            await nftTxn.wait();
+            ToastsStore.success(`Minted, see transaction: https://goerli.etherscan.io/tx/${nftTxn.hash}`);
+          } catch (e) {
+            console.log(e)
+            ToastsStore.error("Sorry. Error occured")
+            return;
+          }
         }
-
         ToastsStore.success("NFT minting successed!");
-
       } else {
         ToastsStore.error("Please connect the wallet");
       }
     } else {
       ToastsStore.error("Please install Metamask!");
     }
-
     setMintState(false);
   }
 
@@ -346,7 +358,6 @@ function App() {
               </div>
             </div>
             <div className={'flex items-start justify-center xl:justify-start space-x-6 relative order-first lg:order-last'}>
-              {/*<img src={require('./assets/images/logo.gif').default} className={'w-40 sm:w-96 h-40 sm:h-96 rounded-full'}/>*/}
               <img src={require('./assets/images/planet.png').default} className={'w-64 h-40 hidden md:block object-contain'} />
             </div>
           </div>
@@ -426,7 +437,7 @@ function App() {
                   type="number"
                   id="first_name"
                   value={mintAmount}
-                  onClick={mintNow}
+                  readOnly
                   className="rounded flex text-black ml-5 mr-5" required />
                 <button className="rounded-full w-8 ctrl-number" onClick={addMintNumber}>
                   +
