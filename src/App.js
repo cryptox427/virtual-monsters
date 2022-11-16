@@ -264,7 +264,8 @@ function App() {
             ToastsStore.success(`Minted, see transaction: https://goerli.etherscan.io/tx/${nftTxn.hash}`);
           } catch (e) {
             console.log(e)
-            ToastsStore.error("Sorry. Error occured")
+            ToastsStore.error("Sorry. Error occured");
+            setMintState(false);
             return;
           }
         }
@@ -329,8 +330,7 @@ function App() {
 
           <button className={'flex justify-center items-center rounded-full px-6 py-2 text-sm text-white relative h-10'}>
             <img src={require('./assets/images/btn.png').default} className={'absolute h-14 w-48'} style={{ zIndex: -1 }} />
-            CONNECT
-            WALLET
+            CONNECT WALLET
           </button>
 
         </div>}
@@ -455,6 +455,8 @@ function App() {
         ) : (
           <></>
         )}
+
+      
         <div className={'pt-10 pb-16'} id={'tokenomics'}>
           <div className={'flex justify-center items-center text-5xl font-semibold text-white mt-10'}>Tokenomics</div>
           <div className={'mt-5 text-center text-2xl text-white font-medium'}>Total Supply: 1,000,000,000,000</div>
@@ -466,6 +468,15 @@ function App() {
             height={"500px"}
           />
         </div>
+
+        {account ? (
+          <div className={'pt-10 pb-16'} id={'nft_staking'}>
+              <div className={'flex justify-center items-center text-5xl font-semibold text-white mt-10'}>NFT Staking</div>
+              <div className={'mt-5 text-center text-2xl text-white font-medium'}>{'Hi, These are ...'}</div>
+          </div>
+        ) : (
+          <></>
+        )}
         <div className={'pt-10 pb-16'} id={'partners'}>
           <div className={'flex justify-center items-center text-5xl font-semibold text-white mt-10'}>Partners</div>
           <div className={'flex flex-col sm:flex-row justify-center items-center space-y-8 sm:space-y-0 space-x-0 sm:space-x-10 mt-20'}>
