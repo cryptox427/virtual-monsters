@@ -20,9 +20,14 @@ import 'swiper/swiper.min.css'
 import 'swiper/modules/pagination/pagination.min.css'
 
 import VMonstersABI from "./contracts/VirtualMonsters.json";
+import VMonstersStakingABI from "./contracts/VirtualMonstersStaking.json";
 
 const Cancel = 'images/cancel.svg';
-const VMonsterAddress = "0xc777950A5Df2aEb89543145628E33679a0A9E53B";
+const VMonsterAddress = "0xdDB43c95EEBce2ddb38872287CE33D17057aAa48";     //original mint address from Rosalba ------------------
+// const VMonsterAddress = "0xc777950A5Df2aEb89543145628E33679a0A9E53B";
+
+const VmonsterStakingAddress = "0x2d383F08383f85680008a3ab605F73fd8D2a2F5B";
+const RewardTokenAddress = "0x5Db9bd6543d493F8CAF870abA69F474de01231Ac";
 
 
 
@@ -37,11 +42,14 @@ function App() {
 
   //if mintstep is 1, it is presale. else that is 2 it is public sale.
   const [mintStep, setMintStep] = useState(1);
+  const [busy, setBusy] = useState(false);
+
+  const [tokenIdList, setTokenIdList] = useState([]);
 
 
 
 
-  const swiperRef = useRef(null)
+  // const swiperRef = useRef(null)
   const navItems = [
     { name: 'About', id: 'about' },
     { name: 'NFTs', id: 'nfts' },
@@ -66,42 +74,42 @@ function App() {
     - color-dodge mix blend mode
 
 */
-    var x;
-    var $cards = $(".card");
-    var $style = $(".hover");
+    let x;
+    let $cards = $(".card");
+    let $style = $(".hover");
 
     $cards
       .on("mousemove touchmove", function (e) {
         // normalise touch/mouse
-        var pos = [e.offsetX, e.offsetY];
+        let pos = [e.offsetX, e.offsetY];
         e.preventDefault();
         if (e.type === "touchmove") {
           pos = [e.touches[0].clientX, e.touches[0].clientY];
         }
-        var $card = $(this);
+        let $card = $(this);
         // math for mouse position
-        var l = pos[0];
-        var t = pos[1];
-        var h = $card.height();
-        var w = $card.width();
-        var px = Math.abs(Math.floor(100 / w * l) - 100);
-        var py = Math.abs(Math.floor(100 / h * t) - 100);
-        var pa = (50 - px) + (50 - py);
+        let l = pos[0];
+        let t = pos[1];
+        let h = $card.height();
+        let w = $card.width();
+        let px = Math.abs(Math.floor(100 / w * l) - 100);
+        let py = Math.abs(Math.floor(100 / h * t) - 100);
+        let pa = (50 - px) + (50 - py);
         // math for gradient / background positions
-        var lp = (50 + (px - 50) / 1.5);
-        var tp = (50 + (py - 50) / 1.5);
-        var px_spark = (50 + (px - 50) / 7);
-        var py_spark = (50 + (py - 50) / 7);
-        var p_opc = 20 + (Math.abs(pa) * 1.5);
-        var ty = ((tp - 50) / 2) * -1;
-        var tx = ((lp - 50) / 1.5) * .5;
+        let lp = (50 + (px - 50) / 1.5);
+        let tp = (50 + (py - 50) / 1.5);
+        let px_spark = (50 + (px - 50) / 7);
+        let py_spark = (50 + (py - 50) / 7);
+        let p_opc = 20 + (Math.abs(pa) * 1.5);
+        let ty = ((tp - 50) / 2) * -1;
+        let tx = ((lp - 50) / 1.5) * .5;
         // css to apply for active card
-        var grad_pos = `background-position: ${lp}% ${tp}%;`
-        var sprk_pos = `background-position: ${px_spark}% ${py_spark}%;`
-        var opc = `opacity: ${p_opc / 100};`
-        var tf = `transform: rotateX(${ty}deg) rotateY(${tx}deg)`
+        let grad_pos = `background-position: ${lp}% ${tp}%;`
+        let sprk_pos = `background-position: ${px_spark}% ${py_spark}%;`
+        let opc = `opacity: ${p_opc / 100};`
+        let tf = `transform: rotateX(${ty}deg) rotateY(${tx}deg)`
         // need to use a <style> tag for psuedo elements
-        var style = `
+        let style = `
       .card:hover:before { ${grad_pos} }  /* gradient */
       .card:hover:after { ${sprk_pos} ${opc} }   /* sparkles */ 
     `
@@ -116,7 +124,7 @@ function App() {
         clearTimeout(x);
       }).on("mouseout touchend touchcancel", function () {
         // remove css, apply custom animation on end
-        var $card = $(this);
+        let $card = $(this);
         $style.html("");
         $card.removeAttr("style");
         x = setTimeout(function () {
@@ -182,6 +190,7 @@ function App() {
   }
 
   const walletDisconnect = async () => {
+    setTokenIdList([]);
     deactivate();
   }
 
@@ -192,15 +201,16 @@ function App() {
   const handleLogin = async (wname) => {
     let sign = 1;
     if (wname === 'Wallet Connect') {
-      activate(walletconnector);
+      await activate(walletconnector);
     } else if (wname === 'Binance Wallet') {
-      activate(bsc)
+      await activate(bsc)
     } else if (wname === 'Metamask') {
       await activate(injected);
     } else {
       ToastsStore.error("This supports only Metamask and Wallet Connect");
     }
-    setOpen(false)
+    setOpen(false);
+    tokenInitFunction();
   }
 
   const subMintNumber = async () => {
@@ -224,13 +234,14 @@ function App() {
       return;
     }
     if (ethereum) {
-      var provider = new ethers.providers.Web3Provider(ethereum);
+      let provider = new ethers.providers.Web3Provider(ethereum);
       const accounts = await provider.listAccounts();
       if (accounts.length > 0) {
         const { chainId } = await provider.getNetwork();
         if (chainId !== 0x5) {
           return;
         }
+
         setMintState(true);
 
         const signer = provider.getSigner();
@@ -239,8 +250,7 @@ function App() {
         const mintPrice = await VMonsterContract.mintPrice();
 
 
-        if (mintStep == 1) 
-        {
+        if (mintStep == 1) {
           let price = mintAmount * presalePrice;
 
           try {
@@ -256,7 +266,7 @@ function App() {
         }
         else {
           let price = mintAmount * mintPrice;
-          
+
           try {
             const nftTxn = await VMonsterContract.mintPublic(mintAmount, { value: `${price}` });
             ToastsStore.success("Minting...please wait.")
@@ -279,6 +289,79 @@ function App() {
     setMintState(false);
   }
 
+  const tokenInitFunction = async () => {
+    const { ethereum } = window;
+    if (ethereum) {
+      let provider = new ethers.providers.Web3Provider(ethereum);
+      const accounts = await provider.listAccounts();
+      if (accounts.length > 0) {
+        const { chainId } = await provider.getNetwork();
+        if (chainId !== 0x5) {
+          ToastsStore.error("Please set network properly.");
+          return;
+        }
+        try {
+          const signer = provider.getSigner();
+          const VMonsterContract = new ethers.Contract(VMonsterAddress, VMonstersABI, signer);
+          const arrayTokenList = await VMonsterContract.getTokenList(accounts[0]);
+          // let tempIdList = [];
+          // let tempTokenId;
+
+          // arrayTokenList.map(async (list, i) => {
+            
+          //   tempTokenId = await VMonsterContract.tokenURI(list.toNumber());
+          //   tempIdList.push(tempTokenId);
+          //   // tempIdList.push(await VMonsterContract.tokenURI(list.toNumber()));
+          //   console.log(tempIdList);
+
+          // });
+
+            setTokenIdList(arrayTokenList);
+            // console.log('---------------------------------------');
+            // console.log(tempIdList);
+        } catch (e) {
+          console.log(e);
+          ToastsStore.error("Sorry. Error occured")
+          return;
+        }
+      } else {
+        ToastsStore.error("Please connect the wallet");
+      }
+    } else {
+      ToastsStore.error("Please install Metamask!");
+    }
+  }
+
+  const stakingAction = async (tokenId) => {
+
+    const { ethereum } = window;
+    if (ethereum) {
+      let provider = new ethers.providers.Web3Provider(ethereum);
+      const accounts = await provider.listAccounts();
+      if (accounts.length > 0) {
+        const { chainId } = await provider.getNetwork();
+        if (chainId !== 0x5) {
+          ToastsStore.error("Please set network properly.");
+          return;
+        }
+        try {
+          const signer = provider.getSigner();
+          const VMonsterContract = new ethers.Contract(VmonsterStakingAddress, VMonstersStakingABI, signer);
+          await VMonsterContract.stake(tokenId);
+          ToastsStore.success("TokedId " + tokenId +"has been staked successfully!");
+
+        } catch (e) {
+          console.log(e.message);
+          ToastsStore.error("Sorry. Error occured")
+          return;
+        }
+      } else {
+        ToastsStore.error("Please connect the wallet");
+      }
+    } else {
+      ToastsStore.error("Please install Metamask!");
+    }
+  }
 
   return (
     <div className={'background overflow-y-scroll'}>
@@ -337,7 +420,7 @@ function App() {
       </nav>
       <div>
         <div>
-          <div className={'grid grid-cols-1 order-last lg:order-start lg:grid-cols-2 px-2 sm:px-16 mt-28'}>
+          <div className={'grid grid-cols-1 order-last lg:order-start lg:grid-cols-2 px-8 sm:px-28 mt-28'}>
             <div className={'order-last lg:order-first'}>
               <div className={'text-4xl mt-4 sm:mt-0 sm:text-8xl text-white font-semibold text-center xl:text-left'}>Virtual Monsters</div>
               <div className={'text-base text-indigo-100 mt-10 tracking-wide text-center xl:text-left'}>
@@ -456,7 +539,7 @@ function App() {
           <></>
         )}
 
-      
+
         <div className={'pt-10 pb-16'} id={'tokenomics'}>
           <div className={'flex justify-center items-center text-5xl font-semibold text-white mt-10'}>Tokenomics</div>
           <div className={'mt-5 text-center text-2xl text-white font-medium'}>Total Supply: 1,000,000,000,000</div>
@@ -471,8 +554,23 @@ function App() {
 
         {account ? (
           <div className={'pt-10 pb-16'} id={'nft_staking'}>
+            <div className={'space-y-7 max-w-5xl mx-auto  px-4 lg:px-0'}>
               <div className={'flex justify-center items-center text-5xl font-semibold text-white mt-10'}>NFT Staking</div>
-              <div className={'mt-5 text-center text-2xl text-white font-medium'}>{'Hi, These are ...'}</div>
+              <div className={'mt-10 text-center text-2xl text-white font-medium'}>
+                <div className={'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-7 gap-y-5'}>
+                  {tokenIdList.map((list, i) =>
+                    <div className={'space-y-2'}>
+                      <img src={require('./assets/images/babies/' + i + '.jpg').default} className={'w-2/3 rounded-lg'} />
+                      <div className={'flex items-center space-x-4'}>
+                        <div className={'text-xl text-white'}>VMonster{i}</div>
+                        <a className={'cursor-pointer hover:text-gray-300 hover:border-gray-300 rounded-2xl border border-gray'} onClick={() => stakingAction(list)}>&nbsp;&nbsp;Stake&nbsp;&nbsp;</a>
+                      </div>
+                      <div className={'text-lg font-light text-gray-200 text-left'}>Handsome</div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
         ) : (
           <></>
