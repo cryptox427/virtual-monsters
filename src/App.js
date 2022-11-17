@@ -222,10 +222,10 @@ function App() {
   }
 
   const addMintNumber = async () => {
-    // if(mintAmount >= 2)
-    //   setMintAmount(2);
-    // else
-    setMintAmount(mintAmount + 1);
+    if(mintAmount >= 2)
+      setMintAmount(2);
+    else
+      setMintAmount(mintAmount + 1);
   }
 
   const mintNow = async () => {
@@ -250,9 +250,16 @@ function App() {
         const presalePrice = await VMonsterContract.presalePrice();
         const mintPrice = await VMonsterContract.mintPrice();
 
+        let balance = await provider.getBalance(accounts[0]);
+        balance = balance / (10 ** 18);
+        balance = Number(balance);
 
         if (mintStep == 1) {
           let price = mintAmount * presalePrice;
+          if (balance <= mintAmount * presalePrice) {
+            ToastsStore.error("Sorry. Fund is insufficient.");
+            return;
+          }
 
           try {
             const nftTxn = await VMonsterContract.mintPresale(mintAmount, { value: `${price}` });
@@ -267,6 +274,10 @@ function App() {
         }
         else {
           let price = mintAmount * mintPrice;
+          if (balance <= mintAmount * presalePrice) {
+            ToastsStore.error("Sorry. Fund is insufficient.");
+            return;
+          }
 
           try {
             const nftTxn = await VMonsterContract.mintPublic(mintAmount, { value: `${price}` });
@@ -352,7 +363,7 @@ function App() {
 
   const onActiveImg = async (index) => {
     let temp = activeNumber;
-    if(temp[index] == 1)
+    if (temp[index] == 1)
       temp[index] = 0;
     else
       temp[index] = 1;
@@ -405,21 +416,20 @@ function App() {
     if (ethereum) {
       let provider = new ethers.providers.Web3Provider(ethereum);
       const accounts = await provider.listAccounts();
-      if (accounts.length == 0) 
+      if (accounts.length == 0)
         return;
 
       const { chainId } = await provider.getNetwork();
-      if (chainId !== 0x5) 
-      {
+      if (chainId !== 0x5) {
         ToastsStore.error("Please set network properly.");
         return;
       }
       const signer = provider.getSigner();
       const VMonsterStakingContract = new ethers.Contract(VmonsterStakingAddress, VMonstersStakingABI, signer);
-      try{
+      try {
         await VMonsterStakingContract.updateReward(accounts[0]);
-      } catch(e) {
-        ToastsStore.error(e.message);  
+      } catch (e) {
+        ToastsStore.error(e.message);
       }
       ToastsStore.success("Reward was successfully updated!");
     }
@@ -430,12 +440,11 @@ function App() {
     if (ethereum) {
       let provider = new ethers.providers.Web3Provider(ethereum);
       const accounts = await provider.listAccounts();
-      if (accounts.length == 0) 
+      if (accounts.length == 0)
         return;
 
       const { chainId } = await provider.getNetwork();
-      if (chainId !== 0x5) 
-      {
+      if (chainId !== 0x5) {
         ToastsStore.error("Please set network properly.");
         return;
       }
@@ -444,15 +453,23 @@ function App() {
       try {
         await VMonsterStakingContract.claimReward(accounts[0]);
         ToastsStore.success("Claim was successfully withdrawed!");
-      } catch(e) {
-        ToastsStore.error("Claim is not ready yet.");  
+      } catch (e) {
+        ToastsStore.error("Claim is not ready yet.");
         console.log(e)
       }
-      
+
     }
   }
-  
 
+  // if (!mintState)
+  //   return (
+  //     <button type="button" class="bg-indigo-500 ..." disabled>
+  //       <svg class="animate-spin h-5 w-5 mr-3 ..." viewBox="0 0 24 24">
+  //       </svg>
+  //       Processing...
+  //     </button>
+  //   )
+  // else
   return (
     <div className={'background overflow-y-scroll'}>
       <nav className={'py-5 hidden xl:flex justify-between items-center  px-3 z-10'}>
@@ -597,33 +614,46 @@ function App() {
           </div>
         </div>
         {account ? (
-          <div className="mint-area flex justify-center flex-col items-center ">
-            <div className={'flex w-full justify-center items-center text-5xl font-semibold text-white my-10'}>MINT</div>
+          <>
+            {mintState ? (
+              <div className="mint-area flex justify-center flex-col items-center ">
+                <div className="spinner-container">
+                  <div className="loading-spinner">
+                  </div>
+                </div>
+                <div className={'mt-5 text-center text-2xl text-white font-medium loading-character'}>Loading now.</div>
+              </div>
+            ) : (
+              <div className="mint-area flex justify-center flex-col items-center ">
+                <div className={'flex w-full justify-center items-center text-5xl font-semibold text-white my-10'}>MINT</div>
 
-            <div className='flex w-1/3 justify-center items-center flex-col'>
-              <div className='mint_amount flex flex-row'>
-                <button className="rounded-full w-8 ctrl-number" onClick={subMintNumber}>
-                  -
-                </button>
-                <input
-                  type="number"
-                  id="first_name"
-                  value={mintAmount}
-                  readOnly
-                  className="rounded flex text-black ml-5 mr-5" required />
-                <button className="rounded-full w-8 ctrl-number" onClick={addMintNumber}>
-                  +
-                </button>
+                <div className='flex w-1/3 justify-center items-center flex-col'>
+                  <div className='mint_amount flex flex-row'>
+                    <button className="rounded-full w-8 ctrl-number" onClick={subMintNumber}>
+                      -
+                    </button>
+                    <input
+                      type="number"
+                      id="first_name"
+                      value={mintAmount}
+                      readOnly
+                      className="rounded flex text-black ml-5 mr-5" required />
+                    <button className="rounded-full w-8 ctrl-number" onClick={addMintNumber}>
+                      +
+                    </button>
+                  </div>
+                  <div>
+                    {/* <input className={'flex bg-red-900 text-white mt-10'} type='button' value={'MINT NOW'} /> */}
+                    <button onClick={mintNow} className={'flex justify-center items-center rounded-full px-6 py-2 mt-10 text-sm text-white relative h-10 cta-button'}>
+                      <img src={require('./assets/images/btn.png').default} className={'absolute h-14 w-48'} style={{ zIndex: -1 }} />
+                      MINT NOW
+                    </button>
+                  </div>
+                </div>
               </div>
-              <div>
-                {/* <input className={'flex bg-red-900 text-white mt-10'} type='button' value={'MINT NOW'} /> */}
-                <button onClick={mintNow} className={'flex justify-center items-center rounded-full px-6 py-2 mt-10 text-sm text-white relative h-10 cta-button'}>
-                  <img src={require('./assets/images/btn.png').default} className={'absolute h-14 w-48'} style={{ zIndex: -1 }} />
-                  MINT NOW
-                </button>
-              </div>
-            </div>
-          </div>
+            )}
+
+          </>
         ) : (
           <></>
         )}
@@ -647,21 +677,20 @@ function App() {
               <div className={'flex justify-center items-center text-5xl font-semibold text-white mt-10'}>NFT Staking</div>
               <div className={'mt-10 text-center text-2xl text-white font-medium'}>
                 <div className={'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-7 gap-y-5'}>
-                  {tokenIdList.map((list, i) =>
-                    {console.log(activeNumber[i])}
+                  {tokenIdList.map((list, i) => { console.log(activeNumber[i]) }
                   )}
 
                   {tokenIdList.map((list, i) =>
                     <div className={'space-y-2 mb-30'}>
-                      <img src={require('./assets/images/babies/' + i + '.jpg').default} className={(activeNumber[i] == undefined || activeNumber[i] == 0) ? 'activeImg w-2/3 rounded-lg ' : 'w-2/3 rounded-lg '} onClick = {() => onActiveImg(i)}/>
+                      <img src={require('./assets/images/babies/' + i + '.jpg').default} className={(activeNumber[i] == undefined || activeNumber[i] == 0) ? 'activeImg w-2/3 rounded-lg ' : 'w-2/3 rounded-lg '} onClick={() => onActiveImg(i)} />
                       <div className={'flex items-center space-x-4'}>
                         <div className={'text-xl text-white mr-1'}>VMonster&nbsp;{i}</div>
                         {stakedTokenIds.includes(i) ? (
                           <>
                             <a className={'cursor-pointer hover:text-gray-300 hover:border-gray-300 rounded-2xl border border-gray'}
-                            onDoubleClick={() => stakingAction(list, 3)}
-                            onClick={() => stakingAction(list, 2)}
-                              >&nbsp;&nbsp;Unstake&nbsp;&nbsp;
+                              onDoubleClick={() => stakingAction(list, 3)}
+                              onClick={() => stakingAction(list, 2)}
+                            >&nbsp;&nbsp;Unstake&nbsp;&nbsp;
                             </a>
                           </>
                         ) : (
@@ -671,26 +700,26 @@ function App() {
                           </a>
                         )}
                       </div>
-                      { stakedTokenIds.includes(i) && (
+                      {stakedTokenIds.includes(i) && (
                         <div className={'flex items-center space-x-4'}>
                           <a className={'cursor-pointer hover:text-gray-300 hover:border-gray-300 rounded-2xl text-red-400 border border-red-400'}
                             onClick={() => stakingAction(list, 3)}>
                             &nbsp;&nbsp;Emergency Unstake&nbsp;&nbsp;
                           </a>
                         </div>
-                        )
+                      )
                       }
                     </div>
                   )}
                 </div>
-                
+
               </div>
               <div className={'flex flex-col sm:flex-row justify-center items-center space-y-8 sm:space-y-0 space-x-0 sm:space-x-10 mt-40'}>
-                <a target={'_blank'} onClick = {updateReward} className={'flex justify-center items-center rounded-full px-6 py-2 text-sm text-white relative h-10 w-52 cta-button'}>
+                <a target={'_blank'} onClick={updateReward} className={'flex justify-center items-center rounded-full px-6 py-2 text-sm text-white relative h-10 w-52 cta-button'}>
                   <img src={require('./assets/images/btn.png').default} className={'absolute h-16 w-56'} style={{ zIndex: -1 }} />
                   Update Reward
                 </a>
-                <a target={'_blank'} onClick = {claimReward} className={'flex justify-center items-center rounded-full px-6 py-2 text-sm text-white relative h-10 w-52 cta-button'}>
+                <a target={'_blank'} onClick={claimReward} className={'flex justify-center items-center rounded-full px-6 py-2 text-sm text-white relative h-10 w-52 cta-button'}>
                   <img src={require('./assets/images/btn.png').default} className={'absolute h-16 w-56'} style={{ zIndex: -1 }} />
                   Claim Reward
                 </a>
