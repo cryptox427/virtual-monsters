@@ -259,6 +259,7 @@ function App() {
           console.log(price, balance);
           if (balance <= mintAmount * presalePrice) {
             ToastsStore.error("Sorry. Fund is insufficient.");
+            setMintState(false);
             return;
           }
 
@@ -278,6 +279,7 @@ function App() {
           let price = mintAmount * mintPrice;
           if (balance <= mintAmount * presalePrice) {
             ToastsStore.error("Sorry. Fund is insufficient.");
+            setMintState(false);
             return;
           }
 
