@@ -222,7 +222,7 @@ function App() {
   }
 
   const addMintNumber = async () => {
-    if(mintAmount >= 2)
+    if (mintAmount >= 2)
       setMintAmount(2);
     else
       setMintAmount(mintAmount + 1);
@@ -677,9 +677,6 @@ function App() {
               <div className={'flex justify-center items-center text-5xl font-semibold text-white mt-10'}>NFT Staking</div>
               <div className={'mt-10 text-center text-2xl text-white font-medium'}>
                 <div className={'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-7 gap-y-5'}>
-                  {tokenIdList.map((list, i) => { console.log(activeNumber[i]) }
-                  )}
-
                   {tokenIdList.map((list, i) =>
                     <div className={'space-y-2 mb-30'}>
                       <img src={require('./assets/images/babies/' + i + '.jpg').default} className={(activeNumber[i] == undefined || activeNumber[i] == 0) ? 'activeImg w-2/3 rounded-lg ' : 'w-2/3 rounded-lg '} onClick={() => onActiveImg(i)} />
