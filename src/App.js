@@ -652,7 +652,7 @@ function App() {
                   )}
 
                   {tokenIdList.map((list, i) =>
-                    <div className={'space-y-2'}>
+                    <div className={'space-y-2 mb-30'}>
                       <img src={require('./assets/images/babies/' + i + '.jpg').default} className={(activeNumber[i] == undefined || activeNumber[i] == 0) ? 'activeImg w-2/3 rounded-lg ' : 'w-2/3 rounded-lg '} onClick = {() => onActiveImg(i)}/>
                       <div className={'flex items-center space-x-4'}>
                         <div className={'text-xl text-white mr-1'}>VMonster&nbsp;{i}</div>
@@ -671,16 +671,19 @@ function App() {
                           </a>
                         )}
                       </div>
-                      
+                      { stakedTokenIds.includes(i) && (
+                        <div className={'flex items-center space-x-4'}>
+                          <a className={'cursor-pointer hover:text-gray-300 hover:border-gray-300 rounded-2xl text-red-400 border border-red-400'}
+                            onClick={() => stakingAction(list, 3)}>
+                            &nbsp;&nbsp;Emergency Unstake&nbsp;&nbsp;
+                          </a>
+                        </div>
+                        )
+                      }
                     </div>
                   )}
                 </div>
-                {/* <div>
-                  <button onClick={mintNow} className={'flex justify-center items-center rounded-full px-6 py-2 mt-10 text-sm text-white relative h-10 cta-button'}>
-                    <img src={require('./assets/images/btn.png').default} className={'absolute h-13 w-60'} style={{ zIndex: -1 }} />
-                    EMERGENCY UNSTAKE
-                  </button>
-                </div> */}
+                
               </div>
               <div className={'flex flex-col sm:flex-row justify-center items-center space-y-8 sm:space-y-0 space-x-0 sm:space-x-10 mt-40'}>
                 <a target={'_blank'} onClick = {updateReward} className={'flex justify-center items-center rounded-full px-6 py-2 text-sm text-white relative h-10 w-52 cta-button'}>
