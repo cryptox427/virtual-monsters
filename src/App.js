@@ -45,6 +45,7 @@ function App() {
   const [busy, setBusy] = useState(false);
 
   const [tokenIdList, setTokenIdList] = useState([]);
+  const [stakedTokenIds, setStakedTokenIds] = useState([]);
 
 
 
@@ -303,22 +304,34 @@ function App() {
         try {
           const signer = provider.getSigner();
           const VMonsterContract = new ethers.Contract(VMonsterAddress, VMonstersABI, signer);
+          const VMonsterStakingContract = new ethers.Contract(VmonsterStakingAddress, VMonstersStakingABI, signer);
           const arrayTokenList = await VMonsterContract.getTokenList(accounts[0]);
+
+          const tempStakedTokenIds = await VMonsterStakingContract.getStakedTokens(accounts[0]);
+          setStakedTokenIds(tempStakedTokenIds);
+
+
+
+          /* Here is part to get real json files' content and reflect them in UI */
+
           // let tempIdList = [];
           // let tempTokenId;
-
           // arrayTokenList.map(async (list, i) => {
-            
+
           //   tempTokenId = await VMonsterContract.tokenURI(list.toNumber());
           //   tempIdList.push(tempTokenId);
           //   // tempIdList.push(await VMonsterContract.tokenURI(list.toNumber()));
           //   console.log(tempIdList);
+          //   setTokenIdList(tempIdList);
 
           // });
 
-            setTokenIdList(arrayTokenList);
-            // console.log('---------------------------------------');
-            // console.log(tempIdList);
+          // setTokenIdList(tempIdList);
+
+          // console.log('---------------------------------------');
+          // console.log(tempIdList);
+
+          setTokenIdList(arrayTokenList);   // very simeple way to only get list of tokenlist but not use in front-end display.
         } catch (e) {
           console.log(e);
           ToastsStore.error("Sorry. Error occured")
@@ -332,7 +345,12 @@ function App() {
     }
   }
 
-  const stakingAction = async (tokenId) => {
+  async function Staked(param) {
+    console.log(stakedTokenIds.includes(param));
+    return stakedTokenIds.includes(param)
+  }
+
+  const stakingAction = async (tokenId, actionFlag) => {
 
     const { ethereum } = window;
     if (ethereum) {
@@ -346,9 +364,18 @@ function App() {
         }
         try {
           const signer = provider.getSigner();
-          const VMonsterContract = new ethers.Contract(VmonsterStakingAddress, VMonstersStakingABI, signer);
-          await VMonsterContract.stake(tokenId);
-          ToastsStore.success("TokedId " + tokenId +"has been staked successfully!");
+          const VMonsterStakingContract = new ethers.Contract(VmonsterStakingAddress, VMonstersStakingABI, signer);
+          if (actionFlag == true) {
+            console.log("stake")
+            await VMonsterStakingContract.stake(tokenId);
+            ToastsStore.success("TokedId " + tokenId + "has been staked successfully!");
+          }
+          else {
+            console.log("unstake")
+            await VMonsterStakingContract.unstake(tokenId);
+            ToastsStore.success("TokedId " + tokenId + "has been unstaked successfully!");
+          }
+
 
         } catch (e) {
           console.log(e.message);
@@ -562,8 +589,18 @@ function App() {
                     <div className={'space-y-2'}>
                       <img src={require('./assets/images/babies/' + i + '.jpg').default} className={'w-2/3 rounded-lg'} />
                       <div className={'flex items-center space-x-4'}>
-                        <div className={'text-xl text-white'}>VMonster{i}</div>
-                        <a className={'cursor-pointer hover:text-gray-300 hover:border-gray-300 rounded-2xl border border-gray'} onClick={() => stakingAction(list)}>&nbsp;&nbsp;Stake&nbsp;&nbsp;</a>
+                        <div className={'text-xl text-white'}>VMonster&nbsp;{i}</div>
+                        {stakedTokenIds.includes(i) ? (
+                          <a className={'cursor-pointer hover:text-gray-300 hover:border-gray-300 rounded-2xl border border-gray'}
+                            onClick={() => stakingAction(list, false)}>
+                            &nbsp;&nbsp;Unstake&nbsp;&nbsp;
+                          </a>
+                        ) : (
+                          <a className={'cursor-pointer hover:text-gray-300 hover:border-gray-300 rounded-2xl border border-gray'}
+                            onClick={() => stakingAction(list, true)}>
+                            &nbsp;&nbsp;Stake&nbsp;&nbsp;
+                          </a>
+                        )}
                       </div>
                       <div className={'text-lg font-light text-gray-200 text-left'}>Handsome</div>
                     </div>
