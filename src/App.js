@@ -589,7 +589,7 @@ function App() {
                     <div className={'space-y-2'}>
                       <img src={require('./assets/images/babies/' + i + '.jpg').default} className={'w-2/3 rounded-lg'} />
                       <div className={'flex items-center space-x-4'}>
-                        <div className={'text-xl text-white'}>VMonster&nbsp;{i}</div>
+                        <div className={'text-xl text-white mr-1'}>VMonster&nbsp;{i}</div>
                         {stakedTokenIds.includes(i) ? (
                           <a className={'cursor-pointer hover:text-gray-300 hover:border-gray-300 rounded-2xl border border-gray'}
                             onClick={() => stakingAction(list, false)}>
@@ -602,7 +602,7 @@ function App() {
                           </a>
                         )}
                       </div>
-                      <div className={'text-lg font-light text-gray-200 text-left'}>Handsome</div>
+                      {/* <div className={'text-lg font-light text-gray-200 text-left'}>Handsome</div> */}
                     </div>
                   )}
                 </div>
