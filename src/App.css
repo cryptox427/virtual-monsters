@@ -34,6 +34,7 @@ div, button, text {
   line-height: 1.04em;
   letter-spacing: .25em;
   text-transform: uppercase;
+  cursor: pointer;
 }
 
 .cta-button:hover {
@@ -98,6 +99,14 @@ div, button, text {
 .ctrl-number {
   border: 1px solid wheat;
   font-size: 25px;
+}
+
+.activeImg {
+  border: 2px solid magenta !important;
+}
+
+.inactiveImg {
+  border: none !important;
 }
 
 /* .ctrl-number:hover {

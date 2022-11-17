@@ -46,9 +46,9 @@ function App() {
 
   const [tokenIdList, setTokenIdList] = useState([]);
   const [stakedTokenIds, setStakedTokenIds] = useState([]);
+  const [activeNumber, setActiveNumber] = useState([]);
 
-
-
+  // let  a  = new array();
 
   // const swiperRef = useRef(null)
   const navItems = [
@@ -345,11 +345,23 @@ function App() {
     }
   }
 
-  async function Staked(param) {
-    console.log(stakedTokenIds.includes(param));
-    return stakedTokenIds.includes(param)
+  // async function Staked(param) {
+  //   console.log(stakedTokenIds.includes(param));
+  //   return stakedTokenIds.includes(param)
+  // }
+
+  const onActiveImg = async (index) => {
+    let temp = activeNumber;
+    if(temp[index] == 1)
+      temp[index] = 0;
+    else
+      temp[index] = 1;
+    setActiveNumber(temp);
   }
 
+  // if actionFlag == 1 then stake.
+  // if actionFlag == 2 then unstake.
+  // if actionFlag == 3 then emergency unstake.
   const stakingAction = async (tokenId, actionFlag) => {
 
     const { ethereum } = window;
@@ -365,18 +377,16 @@ function App() {
         try {
           const signer = provider.getSigner();
           const VMonsterStakingContract = new ethers.Contract(VmonsterStakingAddress, VMonstersStakingABI, signer);
-          if (actionFlag == true) {
+          if (actionFlag == 1) {
             console.log("stake")
             await VMonsterStakingContract.stake(tokenId);
             ToastsStore.success("TokedId " + tokenId + "has been staked successfully!");
           }
-          else {
+          else if (actionFlag == 2) {
             console.log("unstake")
             await VMonsterStakingContract.unstake(tokenId);
             ToastsStore.success("TokedId " + tokenId + "has been unstaked successfully!");
           }
-
-
         } catch (e) {
           console.log(e.message);
           ToastsStore.error("Sorry. Error occured")
@@ -390,11 +400,63 @@ function App() {
     }
   }
 
+  const updateReward = async () => {
+    const { ethereum } = window;
+    if (ethereum) {
+      let provider = new ethers.providers.Web3Provider(ethereum);
+      const accounts = await provider.listAccounts();
+      if (accounts.length == 0) 
+        return;
+
+      const { chainId } = await provider.getNetwork();
+      if (chainId !== 0x5) 
+      {
+        ToastsStore.error("Please set network properly.");
+        return;
+      }
+      const signer = provider.getSigner();
+      const VMonsterStakingContract = new ethers.Contract(VmonsterStakingAddress, VMonstersStakingABI, signer);
+      try{
+        await VMonsterStakingContract.updateReward(accounts[0]);
+      } catch(e) {
+        ToastsStore.error(e.message);  
+      }
+      ToastsStore.success("Reward was successfully updated!");
+    }
+  }
+
+  const claimReward = async () => {
+    const { ethereum } = window;
+    if (ethereum) {
+      let provider = new ethers.providers.Web3Provider(ethereum);
+      const accounts = await provider.listAccounts();
+      if (accounts.length == 0) 
+        return;
+
+      const { chainId } = await provider.getNetwork();
+      if (chainId !== 0x5) 
+      {
+        ToastsStore.error("Please set network properly.");
+        return;
+      }
+      const signer = provider.getSigner();
+      const VMonsterStakingContract = new ethers.Contract(VmonsterStakingAddress, VMonstersStakingABI, signer);
+      try {
+        await VMonsterStakingContract.claimReward(accounts[0]);
+        ToastsStore.success("Claim was successfully withdrawed!");
+      } catch(e) {
+        ToastsStore.error("Claim is not ready yet.");  
+        console.log(e)
+      }
+      
+    }
+  }
+  
+
   return (
     <div className={'background overflow-y-scroll'}>
       <nav className={'py-5 hidden xl:flex justify-between items-center  px-3 z-10'}>
-        <img
-          src={require('./assets/images/logo.png').default} className={'w-12 object-contain'} />
+        <img src={require('./assets/images/logo.png').default} className={'w-12 object-contain'} />
         <div className={'flex items-center'}>
           <ul className={'flex space-x-7 mr-10'}>
             {navItems.map((item, i) => <li onClick={() => onClickNav(item.id)}
@@ -586,26 +648,49 @@ function App() {
               <div className={'mt-10 text-center text-2xl text-white font-medium'}>
                 <div className={'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-7 gap-y-5'}>
                   {tokenIdList.map((list, i) =>
+                    {console.log(activeNumber[i])}
+                  )}
+
+                  {tokenIdList.map((list, i) =>
                     <div className={'space-y-2'}>
-                      <img src={require('./assets/images/babies/' + i + '.jpg').default} className={'w-2/3 rounded-lg'} />
+                      <img src={require('./assets/images/babies/' + i + '.jpg').default} className={(activeNumber[i] == undefined || activeNumber[i] == 0) ? 'activeImg w-2/3 rounded-lg ' : 'w-2/3 rounded-lg '} onClick = {() => onActiveImg(i)}/>
                       <div className={'flex items-center space-x-4'}>
                         <div className={'text-xl text-white mr-1'}>VMonster&nbsp;{i}</div>
                         {stakedTokenIds.includes(i) ? (
-                          <a className={'cursor-pointer hover:text-gray-300 hover:border-gray-300 rounded-2xl border border-gray'}
-                            onClick={() => stakingAction(list, false)}>
-                            &nbsp;&nbsp;Unstake&nbsp;&nbsp;
-                          </a>
+                          <>
+                            <a className={'cursor-pointer hover:text-gray-300 hover:border-gray-300 rounded-2xl border border-gray'}
+                            onDoubleClick={() => stakingAction(list, 3)}
+                            onClick={() => stakingAction(list, 2)}
+                              >&nbsp;&nbsp;Unstake&nbsp;&nbsp;
+                            </a>
+                          </>
                         ) : (
                           <a className={'cursor-pointer hover:text-gray-300 hover:border-gray-300 rounded-2xl border border-gray'}
-                            onClick={() => stakingAction(list, true)}>
+                            onClick={() => stakingAction(list, 1)}>
                             &nbsp;&nbsp;Stake&nbsp;&nbsp;
                           </a>
                         )}
                       </div>
-                      {/* <div className={'text-lg font-light text-gray-200 text-left'}>Handsome</div> */}
+                      
                     </div>
                   )}
                 </div>
+                {/* <div>
+                  <button onClick={mintNow} className={'flex justify-center items-center rounded-full px-6 py-2 mt-10 text-sm text-white relative h-10 cta-button'}>
+                    <img src={require('./assets/images/btn.png').default} className={'absolute h-13 w-60'} style={{ zIndex: -1 }} />
+                    EMERGENCY UNSTAKE
+                  </button>
+                </div> */}
+              </div>
+              <div className={'flex flex-col sm:flex-row justify-center items-center space-y-8 sm:space-y-0 space-x-0 sm:space-x-10 mt-40'}>
+                <a target={'_blank'} onClick = {updateReward} className={'flex justify-center items-center rounded-full px-6 py-2 text-sm text-white relative h-10 w-52 cta-button'}>
+                  <img src={require('./assets/images/btn.png').default} className={'absolute h-16 w-56'} style={{ zIndex: -1 }} />
+                  Update Reward
+                </a>
+                <a target={'_blank'} onClick = {claimReward} className={'flex justify-center items-center rounded-full px-6 py-2 text-sm text-white relative h-10 w-52 cta-button'}>
+                  <img src={require('./assets/images/btn.png').default} className={'absolute h-16 w-56'} style={{ zIndex: -1 }} />
+                  Claim Reward
+                </a>
               </div>
             </div>
           </div>
