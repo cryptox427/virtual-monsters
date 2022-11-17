@@ -251,11 +251,12 @@ function App() {
         const mintPrice = await VMonsterContract.mintPrice();
 
         let balance = await provider.getBalance(accounts[0]);
-        balance = balance / (10 ** 18);
+        // balance = balance / (10 ** 18);
         balance = Number(balance);
 
         if (mintStep == 1) {
           let price = mintAmount * presalePrice;
+          console.log(price, balance);
           if (balance <= mintAmount * presalePrice) {
             ToastsStore.error("Sorry. Fund is insufficient.");
             return;
@@ -268,7 +269,8 @@ function App() {
             ToastsStore.success(`Minted, see transaction: https://goerli.etherscan.io/tx/${nftTxn.hash}`);
           } catch (e) {
             console.log(e)
-            ToastsStore.error("Sorry. Error occured")
+            ToastsStore.error("Sorry. Error occured. Users can only mint 2 nfts total.");
+            setMintState(false);
             return;
           }
         }
@@ -286,7 +288,7 @@ function App() {
             ToastsStore.success(`Minted, see transaction: https://goerli.etherscan.io/tx/${nftTxn.hash}`);
           } catch (e) {
             console.log(e)
-            ToastsStore.error("Sorry. Error occured");
+            ToastsStore.error("Sorry. Error occured. Users can only mint 2 nfts total.");
             setMintState(false);
             return;
           }
@@ -642,6 +644,7 @@ function App() {
                       +
                     </button>
                   </div>
+                  <p className='text-white-900'>Users can only mint 2 nfts total.</p>
                   <div>
                     {/* <input className={'flex bg-red-900 text-white mt-10'} type='button' value={'MINT NOW'} /> */}
                     <button onClick={mintNow} className={'flex justify-center items-center rounded-full px-6 py-2 mt-10 text-sm text-white relative h-10 cta-button'}>
