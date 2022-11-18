@@ -449,11 +449,10 @@ function App() {
           const VMonsterContract = new ethers.Contract(VMonsterAddress, VMonstersABI, signer);
           const VMonsterStakingContract = new ethers.Contract(VmonsterStakingAddress, VMonstersStakingABI, signer);
 
-          let checkApprove =await VMonsterContract.isApprovedForAll(accounts[0], VmonsterStakingAddress);
-          if(checkApprove == false)
+          let checkApprove =await VMonsterContract.getApproved(tokenId);
+          if(checkApprove != VmonsterStakingAddress)
           {
-            console.log('appppppppppppppppppproving now');
-            await VMonsterContract.setApprovalForAll(VmonsterStakingAddress, true);
+            await VMonsterContract.approve(VmonsterStakingAddress, tokenId);
           }
 
           if (actionFlag == 1) {
