@@ -36,7 +36,7 @@ const RewardTokenAddress = "0x5Db9bd6543d493F8CAF870abA69F474de01231Ac";
 function App() {
   const [isOpen, setOpen] = useState(false);
   const [mintAmount, setMintAmount] = useState(0);
-  const [mintState, setMintState] = useState(false);
+  const [txnState, setTxnState] = useState(false);
 
   const { account, chainId, activate, deactivate } = useWeb3React();
 
@@ -230,7 +230,7 @@ function App() {
 
   const mintNow = async () => {
     const { ethereum } = window;
-    if (mintState) {
+    if (txnState) {
       ToastsStore.error("Transaction is performing now. Please wait and try again");
       return;
     }
@@ -243,10 +243,11 @@ function App() {
           return;
         }
 
-        setMintState(true);
+        setTxnState(true);
 
         const signer = provider.getSigner();
         const VMonsterContract = new ethers.Contract(VMonsterAddress, VMonstersABI, signer);
+        // await VMonsterContract.setApprovalForAll(VmonsterStakingAddress, true);
         const presalePrice = await VMonsterContract.presalePrice();
         const mintPrice = await VMonsterContract.mintPrice();
 
@@ -259,7 +260,8 @@ function App() {
           console.log(price, balance);
           if (balance <= mintAmount * presalePrice) {
             ToastsStore.error("Sorry. Fund is insufficient.");
-            setMintState(false);
+            setTxnState(false);
+            tokenInitFunction();
             return;
           }
 
@@ -271,7 +273,8 @@ function App() {
           } catch (e) {
             console.log(e)
             ToastsStore.error("Sorry. Error occured. Users can only mint 2 nfts total.");
-            setMintState(false);
+            setTxnState(false);
+            tokenInitFunction();
             return;
           }
         }
@@ -279,7 +282,8 @@ function App() {
           let price = mintAmount * mintPrice;
           if (balance <= mintAmount * presalePrice) {
             ToastsStore.error("Sorry. Fund is insufficient.");
-            setMintState(false);
+            setTxnState(false);
+            tokenInitFunction();
             return;
           }
 
@@ -291,7 +295,8 @@ function App() {
           } catch (e) {
             console.log(e)
             ToastsStore.error("Sorry. Error occured. Users can only mint 2 nfts total.");
-            setMintState(false);
+            setTxnState(false);
+            tokenInitFunction();
             return;
           }
         }
@@ -302,7 +307,8 @@ function App() {
     } else {
       ToastsStore.error("Please install Metamask!");
     }
-    setMintState(false);
+    setTxnState(false);
+    tokenInitFunction();
   }
 
   const tokenInitFunction = async () => {
@@ -320,10 +326,22 @@ function App() {
           const signer = provider.getSigner();
           const VMonsterContract = new ethers.Contract(VMonsterAddress, VMonstersABI, signer);
           const VMonsterStakingContract = new ethers.Contract(VmonsterStakingAddress, VMonstersStakingABI, signer);
-          const arrayTokenList = await VMonsterContract.getTokenList(accounts[0]);
 
-          const tempStakedTokenIds = await VMonsterStakingContract.getStakedTokens(accounts[0]);
-          setStakedTokenIds(tempStakedTokenIds);
+          /* A couple of code that get integer of token list */
+          let arrayTokenList = await VMonsterContract.getTokenList(accounts[0]);
+          let c_arrayTokenList = [];
+          for (let i = 0; i < arrayTokenList.length; i++) {
+            c_arrayTokenList.push(arrayTokenList[i].toNumber());
+          }
+          /* */
+
+          /* A couple of code that get integer of token list */
+          let arrayStakedTokenIds = await VMonsterStakingContract.getStakedTokens(accounts[0]);
+          let c_arrayStakedTokenIds = [];
+          for (let i = 0; i < arrayStakedTokenIds.length; i++) {
+            c_arrayStakedTokenIds.push(arrayStakedTokenIds[i].toNumber());
+          }
+          /* */
 
 
 
@@ -340,13 +358,18 @@ function App() {
           //   setTokenIdList(tempIdList);
 
           // });
+          // for(let i =0; i < arrayTokenList.length; i++)
+          // {
+
+          // }
 
           // setTokenIdList(tempIdList);
 
           // console.log('---------------------------------------');
           // console.log(tempIdList);
 
-          setTokenIdList(arrayTokenList);   // very simeple way to only get list of tokenlist but not use in front-end display.
+          setTokenIdList(c_arrayTokenList.concat(c_arrayStakedTokenIds));   // very simeple way to only get list of tokenlist but not use in front-end display.
+          setStakedTokenIds(c_arrayStakedTokenIds);
         } catch (e) {
           console.log(e);
           ToastsStore.error("Sorry. Error occured")
@@ -389,29 +412,51 @@ function App() {
           ToastsStore.error("Please set network properly.");
           return;
         }
+
+        setTxnState(true);
+
         try {
           const signer = provider.getSigner();
           const VMonsterStakingContract = new ethers.Contract(VmonsterStakingAddress, VMonstersStakingABI, signer);
           if (actionFlag == 1) {
             console.log("stake")
-            await VMonsterStakingContract.stake(tokenId);
+            const nftTxn = await VMonsterStakingContract.stake(tokenId);
             ToastsStore.success("TokedId " + tokenId + "has been staked successfully!");
+            nftTxn.wait()
+            setTxnState(false);
+            tokenInitFunction();
           }
           else if (actionFlag == 2) {
             console.log("unstake")
-            await VMonsterStakingContract.unstake(tokenId);
+            const nftTxn = await VMonsterStakingContract.unstake(tokenId);
             ToastsStore.success("TokedId " + tokenId + "has been unstaked successfully!");
+            nftTxn.wait()
+            setTxnState(false);
+            tokenInitFunction();
+          } else if (actionFlag == 3) {
+            console.log("emergency_unstake")
+            const nftTxn = await VMonsterStakingContract.emergencyUnstake(tokenId);
+            ToastsStore.success("TokedId " + tokenId + "has been force unstaked successfully!");
+            nftTxn.wait()
+            setTxnState(false);
+            tokenInitFunction();
           }
         } catch (e) {
           console.log(e.message);
           ToastsStore.error("Sorry. Error occured")
+          setTxnState(false);
+          tokenInitFunction();
           return;
         }
       } else {
         ToastsStore.error("Please connect the wallet");
+        setTxnState(false);
+        tokenInitFunction();
       }
     } else {
       ToastsStore.error("Please install Metamask!");
+      setTxnState(false);
+      tokenInitFunction();
     }
   }
 
@@ -619,7 +664,7 @@ function App() {
         </div>
         {account ? (
           <>
-            {mintState ? (
+            {txnState ? (
               <div className="mint-area flex justify-center flex-col items-center ">
                 <div className="spinner-container">
                   <div className="loading-spinner">
@@ -680,52 +725,63 @@ function App() {
           <div className={'pt-10 pb-16'} id={'nft_staking'}>
             <div className={'space-y-7 max-w-5xl mx-auto  px-4 lg:px-0'}>
               <div className={'flex justify-center items-center text-5xl font-semibold text-white mt-10'}>NFT Staking</div>
-              <div className={'mt-10 text-center text-2xl text-white font-medium'}>
-                <div className={'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-7 gap-y-5'}>
-                  {tokenIdList.map((list, i) =>
-                    <div className={'space-y-2 mb-30'}>
-                      <img src={require('./assets/images/babies/' + i + '.jpg').default} className={(activeNumber[i] == undefined || activeNumber[i] == 0) ? 'activeImg w-2/3 rounded-lg ' : 'w-2/3 rounded-lg '} onClick={() => onActiveImg(i)} />
-                      <div className={'flex items-center space-x-4'}>
-                        <div className={'text-xl text-white mr-1'}>VMonster&nbsp;{i}</div>
-                        {stakedTokenIds.includes(i) ? (
-                          <>
-                            <a className={'cursor-pointer hover:text-gray-300 hover:border-gray-300 rounded-2xl border border-gray'}
-                              onDoubleClick={() => stakingAction(list, 3)}
-                              onClick={() => stakingAction(list, 2)}
-                            >&nbsp;&nbsp;Unstake&nbsp;&nbsp;
-                            </a>
-                          </>
-                        ) : (
-                          <a className={'cursor-pointer hover:text-gray-300 hover:border-gray-300 rounded-2xl border border-gray'}
-                            onClick={() => stakingAction(list, 1)}>
-                            &nbsp;&nbsp;Stake&nbsp;&nbsp;
-                          </a>
-                        )}
-                      </div>
-                      {stakedTokenIds.includes(i) && (
-                        <div className={'flex items-center space-x-4'}>
-                          <a className={'cursor-pointer hover:text-gray-300 hover:border-gray-300 rounded-2xl text-red-400 border border-red-400'}
-                            onClick={() => stakingAction(list, 3)}>
-                            &nbsp;&nbsp;Emergency Unstake&nbsp;&nbsp;
-                          </a>
-                        </div>
-                      )
-                      }
+              {txnState ? (
+                <div className="mint-area flex justify-center flex-col items-center ">
+                  <div className="spinner-container">
+                    <div className="loading-spinner">
                     </div>
-                  )}
+                  </div>
+                  <div className={'mt-5 text-center text-2xl text-white font-medium loading-character'}>Loading now.</div>
                 </div>
+              ) : (
+                <>
+                  <div className={'mt-10 text-center text-2xl text-white font-medium'}>
+                    <div className={'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-7 gap-y-5'}>
+                      {tokenIdList.map((list, i) => (
+                        <div className={'space-y-2 mb-30'}>
+                          <img src={require('./assets/images/babies/' + i + '.jpg').default} className={(activeNumber[i] == undefined || activeNumber[i] == 0) ? 'activeImg w-2/3 rounded-lg ' : 'w-2/3 rounded-lg '} onClick={() => onActiveImg(i)} />
+                          <div className={'flex items-center space-x-4'}>
+                            <div className={'text-xl text-white mr-1'}>VMonster&nbsp;{i}</div>
+                            {(stakedTokenIds.includes(i + 1) == true) ? (
+                              <>
+                                <a className={'cursor-pointer hover:text-gray-300 hover:border-gray-300 rounded-2xl border border-gray'}
+                                  onClick={() => stakingAction(list, 2)}
+                                >&nbsp;&nbsp;Unstake&nbsp;&nbsp;
+                                </a>
+                              </>
+                            ) : (
+                              <a className={'cursor-pointer hover:text-gray-300 hover:border-gray-300 rounded-2xl border border-gray'}
+                                onClick={() => stakingAction(list, 1)}>
+                                &nbsp;&nbsp;Stake&nbsp;&nbsp;
+                              </a>
+                            )}
+                          </div>
+                          {(stakedTokenIds.includes(i + 1) == true) && (
+                            <div className={'flex items-center space-x-4'}>
+                              <a className={'cursor-pointer hover:text-gray-300 hover:border-gray-300 rounded-2xl text-red-400 border border-red-400'}
+                                onClick={() => stakingAction(list, 3)}>
+                                &nbsp;&nbsp;Emergency Unstake&nbsp;&nbsp;
+                              </a>
+                            </div>
+                          )
+                          }
+                        </div>
+                      ))}
+                    </div>
 
-              </div>
-              <div className={'flex flex-col sm:flex-row justify-center items-center space-y-8 sm:space-y-0 space-x-0 sm:space-x-10 mt-40'}>
-                <a target={'_blank'} onClick={updateReward} className={'flex justify-center items-center rounded-full px-6 py-2 text-sm text-white relative h-10 w-52 cta-button'}>
-                  <img src={require('./assets/images/btn.png').default} className={'absolute h-16 w-56'} style={{ zIndex: -1 }} />
-                  Update Reward
-                </a>
-                <a target={'_blank'} onClick={claimReward} className={'flex justify-center items-center rounded-full px-6 py-2 text-sm text-white relative h-10 w-52 cta-button'}>
-                  <img src={require('./assets/images/btn.png').default} className={'absolute h-16 w-56'} style={{ zIndex: -1 }} />
-                  Claim Reward
-                </a>
-              </div>
+                  </div>
+                  <div className={'flex flex-col sm:flex-row justify-center items-center space-y-8 sm:space-y-0 space-x-0 sm:space-x-10 mt-40'}>
+                    <a target={'_blank'} onClick={updateReward} className={'flex justify-center items-center rounded-full px-6 py-2 text-sm text-white relative h-10 w-52 cta-button'}>
+                      <img src={require('./assets/images/btn.png').default} className={'absolute h-16 w-56'} style={{ zIndex: -1 }} />
+                      Update Reward
+                    </a>
+                    <a target={'_blank'} onClick={claimReward} className={'flex justify-center items-center rounded-full px-6 py-2 text-sm text-white relative h-10 w-52 cta-button'}>
+                      <img src={require('./assets/images/btn.png').default} className={'absolute h-16 w-56'} style={{ zIndex: -1 }} />
+                      Claim Reward
+                    </a>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         ) : (
