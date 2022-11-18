@@ -449,7 +449,12 @@ function App() {
           return;
         }
       } else {
-        ToastsStore.error("Please connect the wallet");
+        if (actionFlag == 2) 
+          ToastsStore.error("Tokens cannnot be claimed yet");
+        else if(actionFlag == 1)
+          ToastsStore.error("You user must be the owner of the token");
+        else
+          ToastsStore.error("Please connect the wallet");
         setTxnState(false);
         tokenInitFunction();
       }
