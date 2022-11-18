@@ -316,8 +316,8 @@ function App() {
 
           try {
             const nftTxn = await VMonsterContract.mintPublic(mintAmount, { value: `${price}` });
-            ToastsStore.success("Minting...please wait.")
             await nftTxn.wait();
+            ToastsStore.success("Minting...please wait.");
             ToastsStore.success(`Minted, see transaction: https://goerli.etherscan.io/tx/${nftTxn.hash}`);
           } catch (e) {
             console.log(e)
@@ -459,23 +459,23 @@ function App() {
           if (actionFlag == 1) {
             console.log("stake")
             const nftTxn = await VMonsterStakingContract.stake(tokenId);
+            await nftTxn.wait();
             ToastsStore.success("TokedId " + tokenId + "has been staked successfully!");
-            nftTxn.wait()
             setTxnState(false);
             tokenInitFunction();
           }
           else if (actionFlag == 2) {
             console.log("unstake")
             const nftTxn = await VMonsterStakingContract.unstake(tokenId);
+            await nftTxn.wait()
             ToastsStore.success("TokedId " + tokenId + "has been unstaked successfully!");
-            nftTxn.wait()
             setTxnState(false);
             tokenInitFunction();
           } else if (actionFlag == 3) {
             console.log("emergency_unstake")
             const nftTxn = await VMonsterStakingContract.emergencyUnstake(tokenId);
+            await nftTxn.wait()
             ToastsStore.success("TokedId " + tokenId + "has been force unstaked successfully!");
-            nftTxn.wait()
             setTxnState(false);
             tokenInitFunction();
           }
