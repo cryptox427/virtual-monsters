@@ -446,7 +446,16 @@ function App() {
 
         try {
           const signer = provider.getSigner();
+          const VMonsterContract = new ethers.Contract(VMonsterAddress, VMonstersABI, signer);
           const VMonsterStakingContract = new ethers.Contract(VmonsterStakingAddress, VMonstersStakingABI, signer);
+
+          let checkApprove =await VMonsterContract.isApprovedForAll(accounts[0], VmonsterStakingAddress);
+          if(checkApprove == false)
+          {
+            console.log('appppppppppppppppppproving now');
+            await VMonsterContract.setApprovalForAll(VmonsterStakingAddress, true);
+          }
+
           if (actionFlag == 1) {
             console.log("stake")
             const nftTxn = await VMonsterStakingContract.stake(tokenId);
@@ -472,7 +481,7 @@ function App() {
           }
         } catch (e) {
           console.log(e.message);
-          ToastsStore.error("Sorry. Error occured")
+          ToastsStore.error("Sorry. Your action could not be done right now. Please try agian later.")
           setTxnState(false);
           tokenInitFunction();
           return;
@@ -781,7 +790,7 @@ function App() {
                         <div className={'space-y-2 mb-30'}>
                           <img src={require('./assets/images/babies/' + i + '.jpg').default} className={(activeNumber[i] == undefined && activeNumber[list] == 0) ? 'activeImg w-2/3 rounded-lg ' : 'w-2/3 rounded-lg '} onClick={() => onActiveImg(i)} />
                           <div className={'flex items-center space-x-4'}>
-                            <div className={'text-xl text-white mr-1'}>VMonster&nbsp;{i}</div>
+                            <div className={'text-xl text-white mr-1'}>VMonster&nbsp;{list}</div>
                             {(stakedTokenIds.includes(list) == true) ? (
                               <>
                                 <a className={'cursor-pointer hover:text-gray-300 hover:border-gray-300 rounded-2xl border border-gray'}
