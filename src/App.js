@@ -47,6 +47,8 @@ function App() {
   const [tokenIdList, setTokenIdList] = useState([]);
   const [stakedTokenIds, setStakedTokenIds] = useState([]);
   const [activeNumber, setActiveNumber] = useState([]);
+  const [claimState, setClaimState] = useState(false);
+  const [updateState, setUpdateState] = useState(false);
 
   // let  a  = new array();
 
@@ -66,6 +68,31 @@ function App() {
     cardEffect()
   }, [])
 
+  useEffect(async () => {
+    const { ethereum } = window;
+    if (ethereum) {
+      let provider = new ethers.providers.Web3Provider(ethereum);
+      const accounts = await provider.listAccounts();
+      if (accounts.length > 0) {
+        const { chainId } = await provider.getNetwork();
+        if (chainId !== 0x5) {
+          ToastsStore.error("Please set network properly.");
+          return;
+        }
+        try {
+          const signer = provider.getSigner();
+          const VMonsterContract = new ethers.Contract(VMonsterAddress, VMonstersABI, signer);
+          // const VMonsterStakingContract = new ethers.Contract(VmonsterStakingAddress, VMonstersStakingABI, signer);
+
+          // await VMonsterContract.setApprovalForAll(VmonsterStakingAddress, true);
+        } catch (e) {
+          console.log(e);
+          ToastsStore.error("Sorry, Now now. Please try again later.");
+          return;
+        }
+      }
+    }
+  }, [])
   const cardEffect = () => {
     /*
 
@@ -367,6 +394,8 @@ function App() {
 
           // console.log('---------------------------------------');
           // console.log(tempIdList);
+          console.log(c_arrayTokenList);
+          console.log(c_arrayStakedTokenIds);
 
           setTokenIdList(c_arrayTokenList.concat(c_arrayStakedTokenIds));   // very simeple way to only get list of tokenlist but not use in front-end display.
           setStakedTokenIds(c_arrayStakedTokenIds);
@@ -449,9 +478,9 @@ function App() {
           return;
         }
       } else {
-        if (actionFlag == 2) 
+        if (actionFlag == 2)
           ToastsStore.error("Tokens cannnot be claimed yet");
-        else if(actionFlag == 1)
+        else if (actionFlag == 1)
           ToastsStore.error("You user must be the owner of the token");
         else
           ToastsStore.error("Please connect the wallet");
@@ -467,6 +496,7 @@ function App() {
 
   const updateReward = async () => {
     const { ethereum } = window;
+    setUpdateState(true);
     if (ethereum) {
       let provider = new ethers.providers.Web3Provider(ethereum);
       const accounts = await provider.listAccounts();
@@ -482,8 +512,10 @@ function App() {
       const VMonsterStakingContract = new ethers.Contract(VmonsterStakingAddress, VMonstersStakingABI, signer);
       try {
         await VMonsterStakingContract.updateReward(accounts[0]);
+        setUpdateState(false);
       } catch (e) {
         ToastsStore.error(e.message);
+        setUpdateState(false);
       }
       ToastsStore.success("Reward was successfully updated!");
     }
@@ -491,6 +523,7 @@ function App() {
 
   const claimReward = async () => {
     const { ethereum } = window;
+    setClaimState(true);
     if (ethereum) {
       let provider = new ethers.providers.Web3Provider(ethereum);
       const accounts = await provider.listAccounts();
@@ -507,9 +540,11 @@ function App() {
       try {
         await VMonsterStakingContract.claimReward(accounts[0]);
         ToastsStore.success("Claim was successfully withdrawed!");
+        setClaimState(false);
       } catch (e) {
         ToastsStore.error("Claim is not ready yet.");
         console.log(e)
+        setClaimState(false);
       }
 
     }
@@ -744,10 +779,10 @@ function App() {
                     <div className={'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-7 gap-y-5'}>
                       {tokenIdList.map((list, i) => (
                         <div className={'space-y-2 mb-30'}>
-                          <img src={require('./assets/images/babies/' + i + '.jpg').default} className={(activeNumber[i] == undefined || activeNumber[i] == 0) ? 'activeImg w-2/3 rounded-lg ' : 'w-2/3 rounded-lg '} onClick={() => onActiveImg(i)} />
+                          <img src={require('./assets/images/babies/' + i + '.jpg').default} className={(activeNumber[i] == undefined && activeNumber[list] == 0) ? 'activeImg w-2/3 rounded-lg ' : 'w-2/3 rounded-lg '} onClick={() => onActiveImg(i)} />
                           <div className={'flex items-center space-x-4'}>
                             <div className={'text-xl text-white mr-1'}>VMonster&nbsp;{i}</div>
-                            {(stakedTokenIds.includes(i + 1) == true) ? (
+                            {(stakedTokenIds.includes(list) == true) ? (
                               <>
                                 <a className={'cursor-pointer hover:text-gray-300 hover:border-gray-300 rounded-2xl border border-gray'}
                                   onClick={() => stakingAction(list, 2)}
@@ -761,7 +796,7 @@ function App() {
                               </a>
                             )}
                           </div>
-                          {(stakedTokenIds.includes(i + 1) == true) && (
+                          {(stakedTokenIds.includes(list) == true) && (
                             <div className={'flex items-center space-x-4'}>
                               <a className={'cursor-pointer hover:text-gray-300 hover:border-gray-300 rounded-2xl text-red-400 border border-red-400'}
                                 onClick={() => stakingAction(list, 3)}>
@@ -778,11 +813,11 @@ function App() {
                   <div className={'flex flex-col sm:flex-row justify-center items-center space-y-8 sm:space-y-0 space-x-0 sm:space-x-10 mt-40'}>
                     <a target={'_blank'} onClick={updateReward} className={'flex justify-center items-center rounded-full px-6 py-2 text-sm text-white relative h-10 w-52 cta-button'}>
                       <img src={require('./assets/images/btn.png').default} className={'absolute h-16 w-56'} style={{ zIndex: -1 }} />
-                      Update Reward
+                      {updateState ? (<div className="loading-mini"></div>) : (<>Update Reward</>)}
                     </a>
                     <a target={'_blank'} onClick={claimReward} className={'flex justify-center items-center rounded-full px-6 py-2 text-sm text-white relative h-10 w-52 cta-button'}>
                       <img src={require('./assets/images/btn.png').default} className={'absolute h-16 w-56'} style={{ zIndex: -1 }} />
-                      Claim Reward
+                      {claimState ? (<div className="loading-mini"></div>) : (<>Claim Reward</>)}
                     </a>
                   </div>
                 </>
