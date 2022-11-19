@@ -435,7 +435,8 @@ function App() {
     if (ethereum) {
       let provider = new ethers.providers.Web3Provider(ethereum);
       const accounts = await provider.listAccounts();
-      if (accounts.length > 0) {
+      if (accounts.length > 0) 
+      {
         const { chainId } = await provider.getNetwork();
         if (chainId !== 0x5) {
           ToastsStore.error("Please set network properly.");
@@ -449,15 +450,16 @@ function App() {
           const VMonsterContract = new ethers.Contract(VMonsterAddress, VMonstersABI, signer);
           const VMonsterStakingContract = new ethers.Contract(VmonsterStakingAddress, VMonstersStakingABI, signer);
 
-          let checkApprove =await VMonsterContract.getApproved(tokenId);
-          console.log(checkApprove);
-          console.log(VmonsterStakingAddress);
+          let checkApprove = await VMonsterContract.getApproved(tokenId);
 
-          if((checkApprove != VmonsterStakingAddress) && (actionFlag == 1))
-          {
-            const nftTxn = await VMonsterContract.approvalForAll(VmonsterStakingAddress, tokenId);
+          if (checkApprove != VmonsterStakingAddress) {
+            const nftTxn = await VMonsterContract.approve(VmonsterStakingAddress, tokenId);
             await nftTxn.wait();
           }
+          // else if ((actionFlag > 1)) {
+          //   const nftTxn = await VMonsterContract.approve(accounts[0], tokenId);
+          //   await nftTxn.wait();
+          // }
 
           if (actionFlag == 1) {
             console.log("stake")
