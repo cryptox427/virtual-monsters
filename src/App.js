@@ -450,9 +450,13 @@ function App() {
           const VMonsterStakingContract = new ethers.Contract(VmonsterStakingAddress, VMonstersStakingABI, signer);
 
           let checkApprove =await VMonsterContract.getApproved(tokenId);
+          console.log(checkApprove);
+          console.log(VmonsterStakingAddress);
+
           if((checkApprove != VmonsterStakingAddress) && (actionFlag == 1))
           {
-            await VMonsterContract.approve(VmonsterStakingAddress, tokenId);
+            const nftTxn = await VMonsterContract.approvalForAll(VmonsterStakingAddress, tokenId);
+            await nftTxn.wait();
           }
 
           if (actionFlag == 1) {
@@ -787,7 +791,7 @@ function App() {
                     <div className={'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-7 gap-y-5'}>
                       {tokenIdList.map((list, i) => (
                         <div className={'space-y-2 mb-30'}>
-                          <img src={require('./assets/images/babies/' + list + '.jpg').default} className={(activeNumber[i] == undefined && activeNumber[list] == 0) ? 'activeImg w-2/3 rounded-lg ' : 'w-2/3 rounded-lg '} onClick={() => onActiveImg(i)} />
+                          <img src={require('./assets/images/babies/' + list + '.png').default} className={(activeNumber[i] == undefined && activeNumber[list] == 0) ? 'activeImg w-2/3 rounded-lg ' : 'w-2/3 rounded-lg '} onClick={() => onActiveImg(i)} />
                           <div className={'flex items-center space-x-4'}>
                             <div className={'text-xl text-white mr-1'}>VMonster&nbsp;{list}</div>
                             {(stakedTokenIds.includes(list) == true) ? (
