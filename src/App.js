@@ -83,8 +83,8 @@ function App() {
           const signer = provider.getSigner();
           const VMonsterContract = new ethers.Contract(VMonsterAddress, VMonstersABI, signer);
           // const VMonsterStakingContract = new ethers.Contract(VmonsterStakingAddress, VMonstersStakingABI, signer);
-
-          // await VMonsterContract.setApprovalForAll(VmonsterStakingAddress, true);
+          if(await VMonsterContract.isApprovedForAll(accounts[0], VmonsterStakingAddress) == false)
+            await VMonsterContract.setApprovalForAll(VmonsterStakingAddress, true);
         } catch (e) {
           console.log(e);
           ToastsStore.error("Sorry, Now now. Please try again later.");
@@ -451,13 +451,19 @@ function App() {
           const VMonsterStakingContract = new ethers.Contract(VmonsterStakingAddress, VMonstersStakingABI, signer);
 
           let checkApprove = await VMonsterContract.getApproved(tokenId);
+          console.log(checkApprove)
 
-          if (checkApprove != VmonsterStakingAddress) {
-            const nftTxn = await VMonsterContract.approve(VmonsterStakingAddress, tokenId);
-            await nftTxn.wait();
-          }
+          // if (checkApprove != VmonsterStakingAddress && actionFlag == 1) {
+          //   console.log(tokenId)
+          //   const nftTxn = await VMonsterContract.approve(VmonsterStakingAddress, tokenId);
+          //   await nftTxn.wait();
+          // }
+          // else if(checkApprove != VmonsterStakingAddress && actionFlag > 1) {
+          //   const nftTxn = await VMonsterContract.approve(VmonsterStakingAddress, tokenId);
+          //   await nftTxn.wait();
+          // }
           // else if ((actionFlag > 1)) {
-          //   const nftTxn = await VMonsterContract.approve(accounts[0], tokenId);
+          //   const nftTxn = await VMonsterContract.approve(VmonsterStakingAddress, tokenId);
           //   await nftTxn.wait();
           // }
 
@@ -476,7 +482,8 @@ function App() {
             ToastsStore.success("TokedId " + tokenId + "has been unstaked successfully!");
             setTxnState(false);
             tokenInitFunction();
-          } else if (actionFlag == 3) {
+          } 
+          else if (actionFlag == 3) {
             console.log("emergency_unstake")
             const nftTxn = await VMonsterStakingContract.emergencyUnstake(tokenId);
             await nftTxn.wait()
