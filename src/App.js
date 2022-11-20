@@ -70,7 +70,7 @@ function App() {
 
   useEffect(async () => {
     const { ethereum } = window;
-    if (ethereum) {
+    if (ethereum && account) {
       let provider = new ethers.providers.Web3Provider(ethereum);
       const accounts = await provider.listAccounts();
       if (accounts.length > 0) {
@@ -83,6 +83,7 @@ function App() {
           const signer = provider.getSigner();
           const VMonsterContract = new ethers.Contract(VMonsterAddress, VMonstersABI, signer);
           // const VMonsterStakingContract = new ethers.Contract(VmonsterStakingAddress, VMonstersStakingABI, signer);
+          console.log(await VMonsterContract.isApprovedForAll(accounts[0], VmonsterStakingAddress));
           if(await VMonsterContract.isApprovedForAll(accounts[0], VmonsterStakingAddress) == false)
             await VMonsterContract.setApprovalForAll(VmonsterStakingAddress, true);
         } catch (e) {
@@ -92,7 +93,7 @@ function App() {
         }
       }
     }
-  }, [])
+  }, [account])
   const cardEffect = () => {
     /*
 
