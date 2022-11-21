@@ -68,32 +68,35 @@ function App() {
     cardEffect()
   }, [])
 
-  // useEffect(async () => {
-  //   const { ethereum } = window;
-  //   if (ethereum && account) {
-  //     let provider = new ethers.providers.Web3Provider(ethereum);
-  //     const accounts = await provider.listAccounts();
-  //     if (accounts.length > 0) {
-  //       const { chainId } = await provider.getNetwork();
-  //       if (chainId !== 0x5) {
-  //         ToastsStore.error("Please set network properly.");
-  //         return;
-  //       }
-  //       try {
-  //         const signer = provider.getSigner();
-  //         const VMonsterContract = new ethers.Contract(VMonsterAddress, VMonstersABI, signer);
-  //         // const VMonsterStakingContract = new ethers.Contract(VmonsterStakingAddress, VMonstersStakingABI, signer);
-  //         console.log(await VMonsterContract.isApprovedForAll(accounts[0], VmonsterStakingAddress));
-  //         if(await VMonsterContract.isApprovedForAll(accounts[0], VmonsterStakingAddress) == false)
-  //           await VMonsterContract.setApprovalForAll(VmonsterStakingAddress, true);
-  //       } catch (e) {
-  //         console.log(e);
-  //         ToastsStore.error("Sorry, Now now. Please try again later.");
-  //         return;
-  //       }
-  //     }
-  //   }
-  // }, [account])
+  useEffect(async () => {
+    const { ethereum } = window;
+    if (ethereum && account) {
+      let provider = new ethers.providers.Web3Provider(ethereum);
+      const accounts = await provider.listAccounts();
+      if (accounts.length > 0) {
+        const { chainId } = await provider.getNetwork();
+        if (chainId !== 0x5) {
+          ToastsStore.error("Please set network properly.");
+          return;
+        }
+        try {
+          const signer = provider.getSigner();
+          const VMonsterContract = new ethers.Contract(VMonsterAddress, VMonstersABI, signer);
+          // const VMonsterStakingContract = new ethers.Contract(VmonsterStakingAddress, VMonstersStakingABI, signer);
+          console.log(await VMonsterContract.isApprovedForAll(accounts[0], VmonsterStakingAddress));
+          if(await VMonsterContract.isApprovedForAll(accounts[0], VmonsterStakingAddress) == false)
+            {
+              const  nftTxn = await VMonsterContract.setApprovalForAll(VmonsterStakingAddress, true);
+              await nftTxn.wait();
+            }
+        } catch (e) {
+          console.log(e);
+          ToastsStore.error("Sorry, Now now. Please try again later.");
+          return;
+        }
+      }
+    }
+  }, [account])
   const cardEffect = () => {
     /*
 
@@ -453,6 +456,9 @@ function App() {
 
           let checkApprove = await VMonsterContract.getApproved(tokenId);
           console.log(checkApprove)
+          console.log(VmonsterStakingAddress);
+          console.log(accounts[0])
+          console.log(account)
 
           if (checkApprove != VmonsterStakingAddress && actionFlag == 1) {
             console.log(VmonsterStakingAddress, tokenId);
