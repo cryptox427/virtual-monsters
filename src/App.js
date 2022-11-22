@@ -739,7 +739,7 @@ function App() {
                   <div className="loading-spinner">
                   </div>
                 </div>
-                <div className={'mt-5 text-center text-2xl text-white font-medium loading-character'}>Loading now.</div>
+                <div className={'mt-5 text-center text-2xl text-white font-medium loading-character'}>Pending Transaction now...</div>
               </div>
             ) : (
               <div className="mint-area flex justify-center flex-col items-center ">
@@ -800,7 +800,7 @@ function App() {
                     <div className="loading-spinner">
                     </div>
                   </div>
-                  <div className={'mt-5 text-center text-2xl text-white font-medium loading-character'}>Loading now.</div>
+                  <div className={'mt-5 text-center text-2xl text-white font-medium loading-character'}>Pending Transaction now...</div>
                 </div>
               ) : (
                 <>
